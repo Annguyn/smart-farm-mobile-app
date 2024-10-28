@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:animated_background/animated_background.dart';
 import 'package:flutter/material.dart';
 import 'package:An_Smart_Farm_IOT/pages/control_panel/widgets/option_widget.dart';
@@ -9,6 +11,7 @@ import 'package:An_Smart_Farm_IOT/pages/control_panel/widgets/temp_widget.dart';
 import 'package:An_Smart_Farm_IOT/utils/slider_utils.dart';
 import 'package:An_Smart_Farm_IOT/widgets/custom_appbar.dart';
 import 'package:rainbow_color/rainbow_color.dart';
+import 'package:http/http.dart' as http;
 
 class ControlPanelPage extends StatefulWidget {
   final String tag;
@@ -28,7 +31,7 @@ class _ControlPanelPageState extends State<ControlPanelPage>
   double soilMoisture = 30.0;
   double lightSensor = 500.0;
   double progressVal = 0.49;
-
+  String flaskIp = "192.168.1.10:5000";
   var activeColor = Rainbow(spectrum: [
     const Color(0xFF33C0BA),
     const Color(0xFF1086D4),
@@ -222,9 +225,34 @@ class _ControlPanelPageState extends State<ControlPanelPage>
             Expanded(
               child: PowerWidget(
                 isActive: isActive,
-                onChanged: (val) => setState(() {
-                  isActive = val;
-                }),
+                onChanged: (val) async {
+                  setState(() {
+                    isActive = val;
+                  });
+
+                  // Define the endpoint based on the power state
+                  String action = isActive ? 'on' : 'off';
+                  // Define the endpoint URL
+                  String url = 'http://$flaskIp/control';
+
+                  try {
+                    // Make the HTTP POST request with JSON payload
+                    final response = await http.post(
+                      Uri.parse(url),
+                      headers: {'Content-Type': 'application/json'},
+                      body: jsonEncode({'action': isActive ? 'on' : 'off'}),
+                    );
+
+                    if (response.statusCode == 200) {
+                      print('Action ${isActive ? 'on' : 'off'} successful');
+                    } else {
+                      print('Failed to perform action ${isActive ? 'on' : 'off'}');
+                    }
+                  } catch (e) {
+                    print('Error performing action ${isActive ? 'on' : 'off'}: $e');
+                  }
+
+                },
               ),
             ),
           ],

@@ -13,7 +13,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  http: ^0.13.3
+  video_player: ^2.2.10
+  flutter_mjpeg: ^2.0.4
   flutter_svg: ^1.1.2
   sleek_circular_slider: ^2.0.1
   rainbow_color: ^2.0.1
