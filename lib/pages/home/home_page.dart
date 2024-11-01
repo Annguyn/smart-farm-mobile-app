@@ -32,6 +32,16 @@ class _HomePageState extends State<HomePage> {
         isActive: false,
         color: "#c207db",
         icon: 'assets/svg/speaker.svg'),
+    DeviceModel(
+        name: 'Statistics',
+        isActive: false,
+        color: "#c207db",
+        icon: 'assets/svg/speaker.svg'),
+    DeviceModel(
+        name: 'About us',
+        isActive: false,
+        color: "#c207db",
+        icon: 'assets/svg/speaker.svg'),
   ];
 
   @override
@@ -56,7 +66,7 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: const [
                     Text(
-                      "Hi,Xuân An",
+                      "Hi, Xuân An",
                       style: TextStyle(
                           fontSize: 28,
                           color: Colors.black,
@@ -125,26 +135,32 @@ class _HomePageState extends State<HomePage> {
                           Expanded(
                             child: GridView.builder(
                                 padding: const EdgeInsets.only(top: 10, bottom: 20),
-
                                 gridDelegate:
-                                    const SliverGridDelegateWithMaxCrossAxisExtent(
-                                        maxCrossAxisExtent: 200,
-                                        childAspectRatio: 3 / 4,
-                                        crossAxisSpacing: 20,
-                                        mainAxisSpacing: 20),
+                                const SliverGridDelegateWithMaxCrossAxisExtent(
+                                    maxCrossAxisExtent: 200,
+                                    childAspectRatio: 3 / 4,
+                                    crossAxisSpacing: 20,
+                                    mainAxisSpacing: 20),
                                 itemCount: devices.length,
                                 itemBuilder: (BuildContext ctx, index) {
+                                  // Determine if the device is interactive
+                                  bool isInteractive = devices[index].name != 'Statistics' &&
+                                      devices[index].name != 'About us';
+
                                   return Devices(
                                     name: devices[index].name,
                                     svg: devices[index].icon,
                                     color: devices[index].color.toColor(),
                                     isActive: devices[index].isActive,
-                                    onChanged: (val) {
+                                    isInteractive: isInteractive, // New parameter
+                                    onChanged: isInteractive
+                                        ? (val) {
                                       setState(() {
                                         devices[index].isActive =
-                                            !devices[index].isActive;
+                                        !devices[index].isActive;
                                       });
-                                    },
+                                    }
+                                        : null, // Disable the callback for non-interactive devices
                                   );
                                 }),
                           ),

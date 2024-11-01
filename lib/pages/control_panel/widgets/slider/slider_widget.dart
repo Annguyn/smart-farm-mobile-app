@@ -7,13 +7,17 @@ class SliderWidget extends StatelessWidget {
   final double progressVal;
   final Color color;
   final Function(double) onChange;
+  final String unit;
+  final double realValue; // New parameter to hold the real sensor value
 
-  const SliderWidget(
-      {Key? key,
-      required this.progressVal,
-      required this.color,
-      required this.onChange})
-      : super(key: key);
+  const SliderWidget({
+    Key? key,
+    required this.progressVal,
+    required this.color,
+    required this.onChange,
+    required this.unit,
+    required this.realValue, // Require real value parameter
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -33,30 +37,32 @@ class SliderWidget extends StatelessWidget {
           ),
           Center(
             child: CustomArc(
-                color:color,
-                diameter: kDiameter,
-                sweepAngle: progressVal),
+              color: color,
+              diameter: kDiameter,
+              sweepAngle: progressVal,
+            ),
           ),
           Center(
             child: Container(
               width: kDiameter - 20,
               height: kDiameter - 20,
               decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
                   color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 15,
-                    style: BorderStyle.solid,
+                  width: 15,
+                  style: BorderStyle.solid,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    spreadRadius: 5,
+                    blurRadius: 7,
+                    offset: const Offset(0, 3),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]),
+                ],
+              ),
               child: SleekCircularSlider(
                 min: kMinDegree,
                 max: kMaxDegree,
@@ -69,7 +75,7 @@ class SliderWidget extends StatelessWidget {
                   customWidths: CustomSliderWidths(
                     trackWidth: 20,
                     shadowWidth: 0,
-                    progressBarWidth: 01,
+                    progressBarWidth: 1,
                     handlerSize: 5,
                   ),
                   customColors: CustomSliderColors(
@@ -82,40 +88,17 @@ class SliderWidget extends StatelessWidget {
                 onChange: onChange,
                 innerWidget: (percentage) {
                   return Center(
-                    child: Row(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Display the actual sensor value instead of the percentage
                         Text(
-                          percentage.toInt().toString(),
+                          '$realValue $unit', // Show real value with unit
                           style: const TextStyle(
-                              height: 0,
-                              fontSize: 45,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w500),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 10),
-                          child: Row(
-                            children: const [
-                              Text(
-                                "o",
-                                style: TextStyle(
-                                    height: 0,
-                                    letterSpacing: 2,
-                                    fontSize: 12,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.normal),
-                              ),
-                              Text(
-                                "C",
-                                style: TextStyle(
-                                    height: 0,
-                                    fontSize: 16,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w500),
-                              ),
-                            ],
+                            height: 0,
+                            fontSize: 30,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],

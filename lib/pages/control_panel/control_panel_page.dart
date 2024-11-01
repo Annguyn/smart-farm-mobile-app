@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:animated_background/animated_background.dart';
 import 'package:flutter/material.dart';
 import 'package:An_Smart_Farm_IOT/pages/control_panel/widgets/option_widget.dart';
@@ -12,6 +11,7 @@ import 'package:An_Smart_Farm_IOT/utils/slider_utils.dart';
 import 'package:An_Smart_Farm_IOT/widgets/custom_appbar.dart';
 import 'package:rainbow_color/rainbow_color.dart';
 import 'package:http/http.dart' as http;
+
 
 class ControlPanelPage extends StatefulWidget {
   final String tag;
@@ -43,11 +43,26 @@ class _ControlPanelPageState extends State<ControlPanelPage>
   @override
   void initState() {
     super.initState();
+    fetchSensorData();
   }
 
-  @override
-  void dispose() {
-    super.dispose();
+  Future<void> fetchSensorData() async {
+    try {
+      final response = await http.get(Uri.parse('http://$flaskIp/sensor'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          temp = data['temperature'];
+          humidity = data['humidity'];
+          soilMoisture = data['soilMoisture'];
+          lightSensor = data['lightSensor'];
+        });
+      } else {
+        print('Failed to load sensor data');
+      }
+    } catch (e) {
+      print('Error fetching sensor data: $e');
+    }
   }
 
   @override
@@ -117,6 +132,7 @@ class _ControlPanelPageState extends State<ControlPanelPage>
           isSelected: option == Options.temperature,
           onTap: () => setState(() {
             option = Options.temperature;
+            fetchSensorData();
           }),
           size: 32,
         ),
@@ -125,6 +141,7 @@ class _ControlPanelPageState extends State<ControlPanelPage>
           isSelected: option == Options.humidity,
           onTap: () => setState(() {
             option = Options.humidity;
+            fetchSensorData();
           }),
           size: 25,
         ),
@@ -133,6 +150,7 @@ class _ControlPanelPageState extends State<ControlPanelPage>
           isSelected: option == Options.soilMoisture,
           onTap: () => setState(() {
             option = Options.soilMoisture;
+            fetchSensorData();
           }),
           size: 35,
         ),
@@ -141,6 +159,7 @@ class _ControlPanelPageState extends State<ControlPanelPage>
           isSelected: option == Options.lightSensor,
           onTap: () => setState(() {
             option = Options.lightSensor;
+            fetchSensorData();
           }),
           size: 28,
         ),
@@ -155,57 +174,47 @@ class _ControlPanelPageState extends State<ControlPanelPage>
       case Options.temperature:
         value = temp;
         unit = "°C";
+        progressVal = normalize(temp, kMinTemperature, kMaxTemperature);
         break;
       case Options.humidity:
         value = humidity;
         unit = "%";
+        progressVal = normalize(humidity, kMinHumidity, kMaxHumidity);
         break;
       case Options.soilMoisture:
         value = soilMoisture;
         unit = "%";
+        progressVal = normalize(soilMoisture, kMinSoilMoisture, kMaxSoilMoisture);
         break;
       case Options.lightSensor:
         value = lightSensor;
         unit = "lx";
+        progressVal = normalize(lightSensor, kMinLightSensor, kMaxLightSensor);
         break;
       default:
         value = 0.0;
         unit = "";
     }
+
     return Column(
       children: [
-        Text(
-          "$value $unit",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
         SliderWidget(
           progressVal: progressVal,
           color: activeColor[progressVal],
           onChange: (val) {
             setState(() {
-              switch (option) {
-                case Options.temperature:
-                  temp = val;
-                  break;
-                case Options.humidity:
-                  humidity = val;
-                  break;
-                case Options.soilMoisture:
-                  soilMoisture = val;
-                  break;
-                case Options.lightSensor:
-                  lightSensor = val;
-                  break;
-                default:
-                  break;
-              }
-              progressVal = normalize(val, kMinDegree, kMaxDegree);
+              progressVal = normalize(val, kMinTemperature, kMaxTemperature); // Change based on selected option
             });
           },
+          unit: unit,
+          realValue: value, // Pass the real value here
         ),
       ],
     );
   }
+
+
+
 
   Widget controls() {
     return Column(
@@ -230,13 +239,10 @@ class _ControlPanelPageState extends State<ControlPanelPage>
                     isActive = val;
                   });
 
-                  // Define the endpoint based on the power state
                   String action = isActive ? 'on' : 'off';
-                  // Define the endpoint URL
                   String url = 'http://$flaskIp/control';
 
                   try {
-                    // Make the HTTP POST request with JSON payload
                     final response = await http.post(
                       Uri.parse(url),
                       headers: {'Content-Type': 'application/json'},
@@ -258,13 +264,13 @@ class _ControlPanelPageState extends State<ControlPanelPage>
           ],
         ),
         const SizedBox(height: 15),
-        TempWidget(
-          temp: temp,
-          changeTemp: (val) => setState(() {
-            temp = val;
-            progressVal = normalize(val, kMinDegree, kMaxDegree);
-          }),
-        ),
+        // TempWidget(
+        //   temp: temp,
+        //   changeTemp: (val) => setState(() {
+        //     temp = val;
+        //     progressVal = normalize(val, kMinDegree, kMaxDegree);
+        //   }),
+        // ),
         const SizedBox(height: 15),
       ],
     );
