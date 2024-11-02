@@ -1,11 +1,12 @@
 import 'dart:math';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:An_Smart_Farm_IOT/widgets/custom_appbar.dart';
 import 'package:rainbow_color/rainbow_color.dart';
 import 'package:flutter_mjpeg/flutter_mjpeg.dart';
 
-final String flaskIp = '192.168.1.10:5000'; // Your Flask server IP address
+final String flaskIp = '192.168.1.7:5000';
 
 class CameraControlPage extends StatefulWidget {
   @override
@@ -24,6 +25,36 @@ class _CameraControlPageState extends State<CameraControlPage> with TickerProvid
     const Color(0xFFC421A0),
     const Color(0xFFE4262F),
   ], rangeStart: 0.0, rangeEnd: 1.0);
+
+  Future<void> captureImage() async {
+    final url = Uri.parse('http://$flaskIp/capture');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      print("Image captured successfully!");
+    } else {
+      print("Failed to capture image.");
+    }
+  }
+
+  Future<void> predictDisease() async {
+    final url = Uri.parse('http://$flaskIp/predict');
+    final response = await http.post(url);
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(response.body);
+      String predictedClass = jsonResponse['predicted_class'];
+      double confidence = jsonResponse['confidence'];
+      print("Prediction: $predictedClass, Confidence: $confidence%");
+
+      // Optionally display the result to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Prediction: $predictedClass ($confidence%)"))
+      );
+    } else {
+      print("Failed to get prediction.");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,9 +108,7 @@ class _CameraControlPageState extends State<CameraControlPage> with TickerProvid
                           children: [
                             Expanded(
                               child: InkWell(
-                                onTap: () {
-                                  // Handle capture action here
-                                },
+                                onTap: captureImage,
                                 borderRadius: BorderRadius.circular(10),
                                 child: Ink(
                                   decoration: BoxDecoration(
@@ -105,9 +134,7 @@ class _CameraControlPageState extends State<CameraControlPage> with TickerProvid
                             const SizedBox(width: 10),
                             Expanded(
                               child: InkWell(
-                                onTap: () {
-                                  // Handle predict disease action here
-                                },
+                                onTap: predictDisease,
                                 borderRadius: BorderRadius.circular(10),
                                 child: Ink(
                                   decoration: BoxDecoration(
@@ -134,7 +161,7 @@ class _CameraControlPageState extends State<CameraControlPage> with TickerProvid
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Joystick Control
+                      // Joystick Control - Add joystick logic here as needed
                       SizedBox(
                         height: 150,
                         width: 150,
@@ -166,22 +193,7 @@ class _CameraControlPageState extends State<CameraControlPage> with TickerProvid
 
                                 // Send commands based on angle and radius (for demonstration purposes)
                                 print('Angle: $angle, Radius: $radius');
-                                // Here, send commands to your server based on angle and radius
                               },
-                              onPanEnd: (details) {
-                                // Reset joystick position when released
-                                print('Joystick released');
-                                // Reset command to stop movement
-                              },
-                              child: Container(
-                                height: 60,
-                                width: 60,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.teal,
-                                  border: Border.all(color: Colors.white, width: 2),
-                                ),
-                              ),
                             ),
                           ],
                         ),

@@ -29,9 +29,9 @@ class _ControlPanelPageState extends State<ControlPanelPage>
   double temp = 22.85;
   double humidity = 45.0;
   double soilMoisture = 30.0;
-  double lightSensor = 500.0;
+  double distance = 2;
   double progressVal = 0.49;
-  String flaskIp = "192.168.1.10:5000";
+  String flaskIp = "192.168.1.7:5000";
   var activeColor = Rainbow(spectrum: [
     const Color(0xFF33C0BA),
     const Color(0xFF1086D4),
@@ -54,8 +54,8 @@ class _ControlPanelPageState extends State<ControlPanelPage>
         setState(() {
           temp = data['temperature'];
           humidity = data['humidity'];
-          soilMoisture = data['soilMoisture'];
-          lightSensor = data['lightSensor'];
+          soilMoisture = data['soil_moisture'];
+          distance = data['distance'];
         });
       } else {
         print('Failed to load sensor data');
@@ -187,9 +187,9 @@ class _ControlPanelPageState extends State<ControlPanelPage>
         progressVal = normalize(soilMoisture, kMinSoilMoisture, kMaxSoilMoisture);
         break;
       case Options.lightSensor:
-        value = lightSensor;
-        unit = "lx";
-        progressVal = normalize(lightSensor, kMinLightSensor, kMaxLightSensor);
+        value = distance;
+        unit = "cm";
+        progressVal = normalize(distance, kMinDistance, kMaxDistance);
         break;
       default:
         value = 0.0;

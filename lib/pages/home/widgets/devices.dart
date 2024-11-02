@@ -1,3 +1,4 @@
+import 'package:An_Smart_Farm_IOT/pages/about_us/about_us_page.dart';
 import 'package:animations/animations.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -43,6 +44,9 @@ class Devices extends StatelessWidget {
         }
         else if (name == 'Statistics') {
           return StatisticsPage();
+        }
+        else if (name == 'About us') {
+          return AboutUsPage();
         }
         else {
           return ControlPanelPage(tag: name);
