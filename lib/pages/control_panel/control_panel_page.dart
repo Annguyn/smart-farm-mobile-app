@@ -11,7 +11,7 @@ import 'package:An_Smart_Farm_IOT/utils/slider_utils.dart';
 import 'package:An_Smart_Farm_IOT/widgets/custom_appbar.dart';
 import 'package:rainbow_color/rainbow_color.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:An_Smart_Farm_IOT/constants.dart';
 
 class ControlPanelPage extends StatefulWidget {
   final String tag;
@@ -31,7 +31,6 @@ class _ControlPanelPageState extends State<ControlPanelPage>
   double soilMoisture = 30.0;
   double distance = 2;
   double progressVal = 0.49;
-  String flaskIp = "192.168.1.7:5000";
   var activeColor = Rainbow(spectrum: [
     const Color(0xFF33C0BA),
     const Color(0xFF1086D4),
@@ -155,10 +154,10 @@ class _ControlPanelPageState extends State<ControlPanelPage>
           size: 35,
         ),
         OptionWidget(
-          icon: 'assets/svg/lightbulb-regular.svg',
-          isSelected: option == Options.lightSensor,
+          icon: 'assets/svg/jar-solid.svg',
+          isSelected: option == Options.distance,
           onTap: () => setState(() {
-            option = Options.lightSensor;
+            option = Options.distance;
             fetchSensorData();
           }),
           size: 28,
@@ -186,7 +185,7 @@ class _ControlPanelPageState extends State<ControlPanelPage>
         unit = "%";
         progressVal = normalize(soilMoisture, kMinSoilMoisture, kMaxSoilMoisture);
         break;
-      case Options.lightSensor:
+      case Options.distance:
         value = distance;
         unit = "cm";
         progressVal = normalize(distance, kMinDistance, kMaxDistance);
@@ -207,12 +206,11 @@ class _ControlPanelPageState extends State<ControlPanelPage>
             });
           },
           unit: unit,
-          realValue: value, // Pass the real value here
+          realValue: value,
         ),
       ],
     );
   }
-
 
 
 

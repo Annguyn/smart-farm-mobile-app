@@ -7,13 +7,16 @@ import 'package:An_Smart_Farm_IOT/pages/control_panel/control_panel_page.dart';
 import 'package:An_Smart_Farm_IOT/pages/camera_control/camera_control_page.dart';
 
 import '../../control_panel/statistics_page.dart';
+
 class Devices extends StatelessWidget {
   final String name;
   final String svg;
   final Color color;
   final bool isActive;
-  final Function(bool)? onChanged; // Allow null for non-interactive devices
-  final bool isInteractive; // New parameter
+  final Function(bool)? onChanged;
+  final bool isInteractive;
+  final String mode; // Add mode property
+  final Function(String)? changeMode; // Add changeMode callback
 
   const Devices({
     Key? key,
@@ -22,7 +25,9 @@ class Devices extends StatelessWidget {
     required this.color,
     required this.onChanged,
     required this.isActive,
-    required this.isInteractive, // Include the new parameter
+    required this.isInteractive,
+    required this.mode, // Add mode property
+    required this.changeMode, // Add changeMode callback
   }) : super(key: key);
 
   @override
@@ -41,14 +46,11 @@ class Devices extends StatelessWidget {
       openBuilder: (BuildContext context, VoidCallback _) {
         if (name == 'Smart camera') {
           return CameraControlPage();
-        }
-        else if (name == 'Statistics') {
+        } else if (name == 'Statistics') {
           return StatisticsPage();
-        }
-        else if (name == 'About us') {
+        } else if (name == 'About us') {
           return AboutUsPage();
-        }
-        else {
+        } else {
           return ControlPanelPage(tag: name);
         }
       },
@@ -95,14 +97,19 @@ class Devices extends StatelessWidget {
                       ),
                     ],
                   ),
-                  // Conditionally render the switch based on interactivity
                   if (isInteractive)
                     Transform.scale(
                       alignment: Alignment.center,
                       scaleY: 0.8,
                       scaleX: 0.85,
                       child: CupertinoSwitch(
-                        onChanged: onChanged,
+                        onChanged: (val) {
+                          if (name == 'Smart water pump') {
+                            String newMode = mode == "automatic" ? "manual" : "automatic";
+                            changeMode!(newMode);
+                          }
+                          onChanged!(val);
+                        },
                         value: isActive,
                         activeColor: isActive ? Colors.white.withOpacity(0.4) : Colors.black,
                         trackColor: Colors.black,

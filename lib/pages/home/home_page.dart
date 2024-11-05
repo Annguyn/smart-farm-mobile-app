@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:An_Smart_Farm_IOT/model/device_model.dart';
 import 'package:An_Smart_Farm_IOT/pages/home/widgets/devices.dart';
 import 'package:An_Smart_Farm_IOT/utils/string_to_color.dart';
+
+import '../../constants.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -11,6 +15,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  String mode = 'automatic';
   List<DeviceModel> devices = [
     DeviceModel(
         name: 'Smart water pump',
@@ -43,6 +48,27 @@ class _HomePageState extends State<HomePage> {
         color: "#c207db",
         icon: 'assets/svg/speaker.svg'),
   ];
+
+  Future<void> changeMode(String newMode) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://$flaskIp/mode'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'mode': newMode}),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          mode = newMode;
+        });
+        print('Mode changed to $newMode');
+      } else {
+        print('Failed to change mode');
+      }
+    } catch (e) {
+      print('Error changing mode: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -161,6 +187,8 @@ class _HomePageState extends State<HomePage> {
                                       });
                                     }
                                         : null, // Disable the callback for non-interactive devices
+                                    mode: mode, // Pass mode property
+                                    changeMode: changeMode, // Pass changeMode callback
                                   );
                                 }),
                           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:An_Smart_Farm_IOT/constants.dart';
 
 class StatisticsPage extends StatefulWidget {
   @override
@@ -22,13 +23,12 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
   Future<void> fetchSensorData() async {
     setState(() {
-      isLoading = true; // Show loading indicator when fetching data
+      isLoading = true;
     });
 
     try {
       String filterValue;
 
-      // Determine the filter value based on the selected timeframe
       if (selectedTimeframe.toLowerCase() == 'day') {
         filterValue = DateTime.now().toIso8601String().split('T').first; // Get current date
       } else if (selectedTimeframe.toLowerCase() == 'hour') {
@@ -39,9 +39,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
         throw Exception('Invalid filter type');
       }
 
-      // Construct the request URL
       final response = await http.get(Uri.parse(
-          'http://192.168.1.7:5000/statistics?filter_type=${selectedTimeframe.toLowerCase()}&filter_value=$filterValue'));
+          'http://$flaskIp/statistics?filter_type=${selectedTimeframe.toLowerCase()}&filter_value=$filterValue'));
 
       if (response.statusCode == 200) {
         sensorData = json.decode(response.body);

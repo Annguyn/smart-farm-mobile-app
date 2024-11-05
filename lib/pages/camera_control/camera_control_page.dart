@@ -5,8 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:An_Smart_Farm_IOT/widgets/custom_appbar.dart';
 import 'package:rainbow_color/rainbow_color.dart';
 import 'package:flutter_mjpeg/flutter_mjpeg.dart';
-
-final String flaskIp = '192.168.1.7:5000';
+import 'package:An_Smart_Farm_IOT/constants.dart';
 
 class CameraControlPage extends StatefulWidget {
   @override
