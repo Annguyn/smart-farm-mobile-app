@@ -3,21 +3,25 @@ class DeviceModel {
   String color = "";
   bool isActive = false;
   String icon = "";
-  String mode = "";
+  String? mode; // Make mode nullable
 
   DeviceModel({
     required this.name,
     required this.color,
     required this.isActive,
     required this.icon,
-  }) : mode = (name == 'Smart water pump' && isActive) ? 'automatic' : 'manual';
+  }) {
+    if (name == 'Smart water pump' || name == 'Smart Curtain' || name == 'Smart Fan') {
+      mode = isActive ? 'automatic' : 'manual';
+    }
+  }
 
   DeviceModel.fromJson(Map<String, dynamic> json) {
     name = json['name'];
     color = json['color'];
     isActive = json['isActive'];
     icon = json['icon'];
-    mode = json['mode']; // Add mode property
+    mode = json['mode'];
   }
 
   Map<String, dynamic> toJson() {

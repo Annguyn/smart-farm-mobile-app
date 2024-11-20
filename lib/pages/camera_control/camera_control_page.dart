@@ -14,9 +14,9 @@ class CameraControlPage extends StatefulWidget {
 
 class _CameraControlPageState extends State<CameraControlPage> with TickerProviderStateMixin {
   bool isActive = false;
+  bool _isSendingCommand = false;
   int speed = 1;
   double progressVal = 0.49;
-
   var activeColor = Rainbow(spectrum: [
     const Color(0xFF33C0BA),
     const Color(0xFF1086D4),
@@ -33,6 +33,17 @@ class _CameraControlPageState extends State<CameraControlPage> with TickerProvid
       print("Image captured successfully!");
     } else {
       print("Failed to capture image.");
+    }
+  }
+
+  Future<void> sendServoCommand(String direction) async {
+    final url = Uri.parse('http://$flaskIp/servo/$direction');
+    final response = await http.post(url);
+
+    if (response.statusCode == 200) {
+      print("Servo moved $direction successfully!");
+    } else {
+      print("Failed to move servo $direction.");
     }
   }
 
@@ -53,6 +64,58 @@ class _CameraControlPageState extends State<CameraControlPage> with TickerProvid
     } else {
       print("Failed to get prediction.");
     }
+  }
+
+  // Improved Joystick Control
+  Offset _knobPosition = Offset(75, 75);
+
+  void _handlePanUpdate(DragUpdateDetails details) async {
+    final Offset center = Offset(75, 75); // Tâm joystick
+    Offset newPosition = details.localPosition;
+
+    // Giới hạn di chuyển trong vòng tròn bán kính 75
+    final double distance = (newPosition - center).distance;
+    if (distance > 75) {
+      final angle = atan2(newPosition.dy - center.dy, newPosition.dx - center.dx);
+      newPosition = Offset(
+        center.dx + 75 * cos(angle),
+        center.dy + 75 * sin(angle),
+      );
+    }
+
+    setState(() {
+      _knobPosition = newPosition;
+    });
+
+    // Gửi lệnh theo hướng joystick
+    if (!_isSendingCommand) {
+      _isSendingCommand = true; // Đặt cờ để chặn gửi lệnh liên tiếp
+
+      // Xác định hướng
+      final dx = newPosition.dx - center.dx;
+      final dy = newPosition.dy - center.dy;
+      final angle = atan2(dy, dx);
+
+      if (angle >= -pi / 4 && angle < pi / 4) {
+        await sendServoCommand('right');
+      } else if (angle >= pi / 4 && angle < 3 * pi / 4) {
+        await sendServoCommand('down');
+      } else if (angle >= -3 * pi / 4 && angle < -pi / 4) {
+        await sendServoCommand('up');
+      } else {
+        await sendServoCommand('left');
+      }
+
+      // Thêm độ trễ trước khi cho phép gửi lệnh tiếp theo
+      await Future.delayed(Duration(milliseconds: 300)); // Thời gian trễ 300ms
+      _isSendingCommand = false; // Đặt lại cờ
+    }
+  }
+
+  void _handlePanEnd(DragEndDetails details) {
+    setState(() {
+      _knobPosition = Offset(75, 75); // Reset knob về vị trí trung tâm
+    });
   }
 
   @override
@@ -160,7 +223,7 @@ class _CameraControlPageState extends State<CameraControlPage> with TickerProvid
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Joystick Control - Add joystick logic here as needed
+                      // Joystick Control
                       SizedBox(
                         height: 150,
                         width: 150,
@@ -178,21 +241,28 @@ class _CameraControlPageState extends State<CameraControlPage> with TickerProvid
                               ),
                             ),
                             // Joystick knob
-                            GestureDetector(
-                              onPanUpdate: (details) {
-                                // Handle joystick movement logic here
-                                // Convert the local position to a direction
-                                double dx = details.localPosition.dx - 75; // Center x
-                                double dy = details.localPosition.dy - 75; // Center y
-                                double angle = (dx == 0 && dy == 0) ? 0 : (dx >= 0 ? (dy >= 0 ? atan(dy / dx) : atan(dy / dx) + 2 * pi) : atan(dy / dx) + pi);
-                                double radius = (details.localPosition - Offset(75, 75)).distance;
-
-                                // Normalize the radius to not exceed the joystick radius
-                                radius = radius > 75 ? 75 : radius;
-
-                                // Send commands based on angle and radius (for demonstration purposes)
-                                print('Angle: $angle, Radius: $radius');
-                              },
+                            Positioned(
+                              left: _knobPosition.dx - 25, // Bán kính knob = 25
+                              top: _knobPosition.dy - 25,
+                              child: GestureDetector(
+                                onPanUpdate: _handlePanUpdate,
+                                onPanEnd: _handlePanEnd,
+                                child: Container(
+                                  height: 50,
+                                  width: 50,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.teal,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
                           ],
                         ),

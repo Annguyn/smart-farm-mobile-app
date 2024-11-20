@@ -18,6 +18,11 @@ class _HomePageState extends State<HomePage> {
   String mode = 'automatic';
   List<DeviceModel> devices = [
     DeviceModel(
+        name: 'Control Panel',
+        isActive: true,
+        color: "#33c0ba",
+        icon: 'assets/svg/fan-solid.svg'),
+    DeviceModel(
         name: 'Smart water pump',
         isActive: true,
         color: "#ff5f5f",
@@ -38,6 +43,15 @@ class _HomePageState extends State<HomePage> {
         color: "#c207db",
         icon: 'assets/svg/speaker.svg'),
     DeviceModel(
+        name: 'Smart Curtain',
+        isActive: false,
+        color: "#c207db",
+        icon: 'assets/svg/speaker.svg'),DeviceModel(
+        name: 'Smart Fan',
+        isActive: false,
+        color: "#c207db",
+        icon: 'assets/svg/speaker.svg'),
+    DeviceModel(
         name: 'Statistics',
         isActive: false,
         color: "#c207db",
@@ -49,24 +63,41 @@ class _HomePageState extends State<HomePage> {
         icon: 'assets/svg/speaker.svg'),
   ];
 
-  Future<void> changeMode(String newMode) async {
+  Future<void> changeMode(String device, String newMode) async {
+    final endpoint = {
+      'Smart Curtain': 'curtain',
+      'Smart Fan': 'fan',
+      'Smart water pump': 'pump',
+    };
+
+    final deviceEndpoint = endpoint[device];
+
+    if (deviceEndpoint == null) {
+      print('Device not supported for mode change');
+      return;
+    }
+
+    final url = 'http://$flaskIp/$deviceEndpoint/mode/$newMode';
+
     try {
       final response = await http.post(
-        Uri.parse('http://$flaskIp/mode'),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'mode': newMode}),
       );
 
       if (response.statusCode == 200) {
         setState(() {
           mode = newMode;
+          devices
+              .firstWhere((d) => d.name == device)
+              .isActive = (newMode == 'automatic');
         });
-        print('Mode changed to $newMode');
+        print('$device changed to $newMode mode');
       } else {
-        print('Failed to change mode');
+        print('Failed to change mode for $device');
       }
     } catch (e) {
-      print('Error changing mode: $e');
+      print('Error changing mode for $device: $e');
     }
   }
 
@@ -168,30 +199,32 @@ class _HomePageState extends State<HomePage> {
                                     crossAxisSpacing: 20,
                                     mainAxisSpacing: 20),
                                 itemCount: devices.length,
-                                itemBuilder: (BuildContext ctx, index) {
-                                  // Determine if the device is interactive
-                                  bool isInteractive = devices[index].name != 'Statistics' &&
-                                      devices[index].name != 'About us';
+                              itemBuilder: (BuildContext ctx, index) {
+                                bool isInteractive = devices[index].name != 'Statistics' &&
+                                    devices[index].name != 'About us';
 
-                                  return Devices(
-                                    name: devices[index].name,
-                                    svg: devices[index].icon,
-                                    color: devices[index].color.toColor(),
-                                    isActive: devices[index].isActive,
-                                    isInteractive: isInteractive, // New parameter
-                                    onChanged: isInteractive
-                                        ? (val) {
-                                      setState(() {
-                                        devices[index].isActive =
-                                        !devices[index].isActive;
-                                      });
-                                    }
-                                        : null, // Disable the callback for non-interactive devices
-                                    mode: mode, // Pass mode property
-                                    changeMode: changeMode, // Pass changeMode callback
-                                  );
-                                }),
-                          ),
+                                return Devices(
+                                  name: devices[index].name,
+                                  svg: devices[index].icon,
+                                  color: devices[index].color.toColor(),
+                                  isActive: devices[index].isActive,
+                                  isInteractive: isInteractive,
+                                  onChanged: isInteractive
+                                      ? (val) {
+                                    setState(() {
+                                      devices[index].isActive = !devices[index].isActive;
+                                    });
+                                    // Gọi hàm `changeMode` bằng cách truyền tên thiết bị và chế độ
+                                    final newMode = devices[index].isActive ? 'automatic' : 'manual';
+                                    changeMode(devices[index].name, newMode);
+                                  }
+                                      : null,
+                                  mode: mode,
+                                  changeMode: null, // Không truyền `changeMode` ở đây
+                                );
+                              },
+                            ),
+                            ),
                         ],
                       ),
                     ),

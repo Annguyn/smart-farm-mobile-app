@@ -68,19 +68,49 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
       switch (selectedSensor) {
         case 'Distance':
-          yValue = sensorData[i][6].toDouble(); // Adjusted index
+          yValue = sensorData[i]['distance'].toDouble();
           break;
         case 'Humidity':
-          yValue = sensorData[i][2].toDouble(); // Adjusted index
+          yValue = sensorData[i]['humidity'].toDouble();
           break;
         case 'Temperature':
-          yValue = sensorData[i][3].toDouble(); // Adjusted index
+          yValue = sensorData[i]['temperature'].toDouble();
           break;
         case 'Soil Moisture':
-          yValue = sensorData[i][4].toDouble(); // Adjusted index
+          yValue = sensorData[i]['soil_moisture'].toDouble();
+          break;
+        case 'Light':
+          yValue = sensorData[i]['light'].toDouble();
+          break;
+        case 'Rain Status':
+          yValue = sensorData[i]['rain_status'].toDouble();
+          break;
+        case 'Sound Status':
+          yValue = sensorData[i]['sound_status'].toDouble();
+          break;
+        case 'Motor Status':
+          yValue = sensorData[i]['motor_status'].toDouble();
+          break;
+        case 'Water Level Status':
+          yValue = sensorData[i]['waterLevelStatus'].toDouble();
+          break;
+        case 'Fan Status':
+          yValue = sensorData[i]['fanStatus'].toDouble();
+          break;
+        case 'Curtain Status':
+          yValue = sensorData[i]['curtainStatus'].toDouble();
+          break;
+        case 'Automatic Fan':
+          yValue = sensorData[i]['automaticFan'].toDouble();
+          break;
+        case 'Automatic Pump':
+          yValue = sensorData[i]['automaticPump'].toDouble();
+          break;
+        case 'Automatic Curtain':
+          yValue = sensorData[i]['automaticCurtain'].toDouble();
           break;
         default:
-          yValue = sensorData[i][6].toDouble(); // Adjusted index
+          yValue = sensorData[i]['distance'].toDouble();
       }
 
       spots.add(FlSpot(xValue, yValue));
@@ -110,7 +140,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                   fetchSensorData();
                 });
               },
-              items: <String>['Hour', 'Day', 'Month']
+              items: <String>['Hour', 'Day', 'Month', 'Week', 'Year']
                   .map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
@@ -131,7 +161,17 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 'Distance',
                 'Humidity',
                 'Temperature',
-                'Soil Moisture'
+                'Soil Moisture',
+                'Light',
+                'Rain Status',
+                'Sound Status',
+                'Motor Status',
+                'Water Level Status',
+                'Fan Status',
+                'Curtain Status',
+                'Automatic Fan',
+                'Automatic Pump',
+                'Automatic Curtain'
               ].map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
@@ -190,17 +230,27 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     elevation: 4,
                     child: ListTile(
                       title: Text(
-                        'Timestamp: ${item[1]}', // Match with your database index
+                        'Timestamp: ${item['timestamp']}',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Distance: ${item[6]} cm'), // Adjusted index
-                          Text('Humidity: ${item[2]}%'), // Adjusted index
-                          Text('Temperature: ${item[3]}°C'), // Adjusted index
-                          Text('Soil Moisture: ${item[4]}%'), // Adjusted index
-                          Text('Pump Status: ${item[5]}'), // Adjusted index
+                          Text('Distance: ${item['distance']} cm'),
+                          Text('Humidity: ${item['humidity']}%'),
+                          Text('Temperature: ${item['temperature']}°C'),
+                          Text('Soil Moisture: ${item['soil_moisture']}%'),
+                          Text('Pump Status: ${item['pump_status']}'),
+                          Text('Light: ${item['light']}'),
+                          Text('Rain Status: ${item['rain_status']}'),
+                          Text('Sound Status: ${item['sound_status']}'),
+                          Text('Motor Status: ${item['motor_status']}'),
+                          Text('Water Level Status: ${item['waterLevelStatus']}'),
+                          Text('Fan Status: ${item['fanStatus']}'),
+                          Text('Curtain Status: ${item['curtainStatus']}'),
+                          Text('Automatic Fan: ${item['automaticFan']}'),
+                          Text('Automatic Pump: ${item['automaticPump']}'),
+                          Text('Automatic Curtain: ${item['automaticCurtain']}'),
                         ],
                       ),
                     ),

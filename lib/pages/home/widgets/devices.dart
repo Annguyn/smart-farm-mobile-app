@@ -3,8 +3,9 @@ import 'package:animations/animations.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:An_Smart_Farm_IOT/pages/control_panel/control_panel_page.dart';
+import 'package:An_Smart_Farm_IOT/pages/control_panel/sensor_data.dart';
 import 'package:An_Smart_Farm_IOT/pages/camera_control/camera_control_page.dart';
+import 'package:An_Smart_Farm_IOT/pages/control_panel/control_page.dart';
 
 import '../../control_panel/statistics_page.dart';
 
@@ -46,6 +47,8 @@ class Devices extends StatelessWidget {
       openBuilder: (BuildContext context, VoidCallback _) {
         if (name == 'Smart camera') {
           return CameraControlPage();
+        } else if (name == 'Control Panel') {
+          return ControlPage();
         } else if (name == 'Statistics') {
           return StatisticsPage();
         } else if (name == 'About us') {

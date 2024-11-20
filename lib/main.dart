@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:An_Smart_Farm_IOT/pages/control_panel/control_panel_page.dart';
+import 'package:An_Smart_Farm_IOT/pages/control_panel/sensor_data.dart';
 import 'package:An_Smart_Farm_IOT/pages/home/home_page.dart';
 
 void main() {
