@@ -39,8 +39,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
         throw Exception('Invalid filter type');
       }
 
+      String hostname = await getMdnsHostname();
       final response = await http.get(Uri.parse(
-          'http://$flaskIp/statistics?filter_type=${selectedTimeframe.toLowerCase()}&filter_value=$filterValue'));
+          '$hostname/statistics?filter_type=${selectedTimeframe.toLowerCase()}&filter_value=$filterValue'));
+      print("Url : " + Uri.parse('$hostname/statistics?filter_type=${selectedTimeframe.toLowerCase()}&filter_value=$filterValue').toString());
 
       if (response.statusCode == 200) {
         sensorData = json.decode(response.body);
@@ -87,9 +89,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
           break;
         case 'Sound Status':
           yValue = sensorData[i]['sound_status'].toDouble();
-          break;
-        case 'Motor Status':
-          yValue = sensorData[i]['motor_status'].toDouble();
           break;
         case 'Water Level Status':
           yValue = sensorData[i]['waterLevelStatus'].toDouble();
@@ -165,7 +164,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 'Light',
                 'Rain Status',
                 'Sound Status',
-                'Motor Status',
                 'Water Level Status',
                 'Fan Status',
                 'Curtain Status',
@@ -244,7 +242,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
                           Text('Light: ${item['light']}'),
                           Text('Rain Status: ${item['rain_status']}'),
                           Text('Sound Status: ${item['sound_status']}'),
-                          Text('Motor Status: ${item['motor_status']}'),
                           Text('Water Level Status: ${item['waterLevelStatus']}'),
                           Text('Fan Status: ${item['fanStatus']}'),
                           Text('Curtain Status: ${item['curtainStatus']}'),

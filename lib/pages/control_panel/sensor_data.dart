@@ -54,24 +54,40 @@ class _ControlPanelPageState extends State<ControlPanelPage> with TickerProvider
 
   Future<void> fetchSensorData() async {
     try {
-      final response = await http.get(Uri.parse('http://$flaskIp/data'));
+      String hostname = await getMdnsHostname();
+      final response = await http.get(Uri.parse('$hostname/data'));
+      print("Url : " + Uri.parse('$hostname/data').toString());
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          temp = data['temperature'];
-          humidity = data['humidity'];
-          soilMoisture = data['soilMoisture'];
-          distance = data['distance'];
-          light = data['light'];
-          waterLevelStatus = data['waterLevelStatus'];
-          soundStatus = data['soundStatus'];
-          fanStatus = data['fanStatus'];
-          pumpStatus = data['pumpStatus'];
-          curtainStatus = data['curtainStatus'];
-          automaticFan = data['automaticFan'];
-          automaticPump = data['automaticPump'];
-          automaticCurtain = data['automaticCurtain'];
+          temp = (data['temperature'] as num).toDouble();
+          humidity = (data['humidity'] as num).toDouble();
+          soilMoisture = (data['soilMoisture'] as num).toDouble();
+          distance = (data['distance'] as num).toDouble();
+          light = (data['light'] as num).toDouble();
+          waterLevelStatus = data['waterLevelStatus'] == 1;
+          soundStatus = data['soundStatus'] == 1;
+          fanStatus = data['fanStatus'] == 1;
+          pumpStatus = data['pumpStatus'] == 1;
+          curtainStatus = data['curtainStatus'] == 1;
+          automaticFan = data['automaticFan'] == 1;
+          automaticPump = data['automaticPump'] == 1;
+          automaticCurtain = data['automaticCurtain'] == 1;
         });
+        // Print values to debug
+        print('Temperature: $temp');
+        print('Humidity: $humidity');
+        print('Soil Moisture: $soilMoisture');
+        print('Distance: $distance');
+        print('Light: $light');
+        print('Water Level Status: $waterLevelStatus');
+        print('Sound Status: $soundStatus');
+        print('Fan Status: $fanStatus');
+        print('Pump Status: $pumpStatus');
+        print('Curtain Status: $curtainStatus');
+        print('Automatic Fan: $automaticFan');
+        print('Automatic Pump: $automaticPump');
+        print('Automatic Curtain: $automaticCurtain');
       } else {
         print('Failed to load sensor data');
       }
@@ -84,7 +100,7 @@ class _ControlPanelPageState extends State<ControlPanelPage> with TickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: 'Control Panel'),
+      appBar: CustomAppBar(title: 'Sensor Data'),
       body: Container(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,

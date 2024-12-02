@@ -15,6 +15,7 @@ dependencies:
     sdk: flutter
   http: ^0.13.3
   video_player: ^2.2.10
+  multicast_dns: ^0.3.0
   fl_chart: ^0.69.0
   flutter_mjpeg: ^2.0.4
   flutter_svg: ^1.1.2
@@ -22,6 +23,7 @@ dependencies:
   rainbow_color: ^2.0.1
   animated_background: ^2.0.0
   animations: ^2.0.3
+  shared_preferences: ^2.0.15
 
 dev_dependencies:
   flutter_lints: ^2.0.1
@@ -37,6 +39,7 @@ flutter:
     - assets/images/
     - assets/svg/
     - assets/jpg/
+    - assets/images/flutter.png
 
   fonts:
     - family: Poppins

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:An_Smart_Farm_IOT/pages/control_panel/sensor_data.dart';
 import 'package:An_Smart_Farm_IOT/pages/home/home_page.dart';
-
 void main() {
   runApp(const MyApp());
 }
@@ -26,7 +24,7 @@ class _MyAppState extends State<MyApp> {
             thumbShape: RoundSliderThumbShape(enabledThumbRadius: 8.0),
             overlayShape: RoundSliderOverlayShape(overlayRadius: 15.0),
           )),
-      home: const HomePage(),
+      home: HomePage(),
     );
   }
 }

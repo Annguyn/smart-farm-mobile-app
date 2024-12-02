@@ -7,6 +7,7 @@ import 'package:An_Smart_Farm_IOT/pages/control_panel/sensor_data.dart';
 import 'package:An_Smart_Farm_IOT/pages/camera_control/camera_control_page.dart';
 import 'package:An_Smart_Farm_IOT/pages/control_panel/control_page.dart';
 
+import '../../../set_ip_address_page.dart';
 import '../../control_panel/statistics_page.dart';
 
 class Devices extends StatelessWidget {
@@ -53,7 +54,10 @@ class Devices extends StatelessWidget {
           return StatisticsPage();
         } else if (name == 'About us') {
           return AboutUsPage();
-        } else {
+        } else if (name == 'Settings') {
+          return SetIpAddressPage();
+        }
+        else {
           return ControlPanelPage(tag: name);
         }
       },

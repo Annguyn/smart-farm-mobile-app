@@ -46,7 +46,8 @@ class _HomePageState extends State<HomePage> {
         name: 'Smart Curtain',
         isActive: false,
         color: "#c207db",
-        icon: 'assets/svg/speaker.svg'),DeviceModel(
+        icon: 'assets/svg/speaker.svg'),
+    DeviceModel(
         name: 'Smart Fan',
         isActive: false,
         color: "#c207db",
@@ -58,6 +59,11 @@ class _HomePageState extends State<HomePage> {
         icon: 'assets/svg/speaker.svg'),
     DeviceModel(
         name: 'About us',
+        isActive: false,
+        color: "#c207db",
+        icon: 'assets/svg/speaker.svg'),
+    DeviceModel(
+        name: 'Settings',
         isActive: false,
         color: "#c207db",
         icon: 'assets/svg/speaker.svg'),
@@ -77,7 +83,8 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    final url = 'http://$flaskIp/$deviceEndpoint/mode/$newMode';
+    String hostname = await getMdnsHostname();
+    final url = '$hostname/$deviceEndpoint/mode/$newMode';
 
     try {
       final response = await http.post(
@@ -191,14 +198,14 @@ class _HomePageState extends State<HomePage> {
                           ),
                           Expanded(
                             child: GridView.builder(
-                                padding: const EdgeInsets.only(top: 10, bottom: 20),
-                                gridDelegate:
-                                const SliverGridDelegateWithMaxCrossAxisExtent(
-                                    maxCrossAxisExtent: 200,
-                                    childAspectRatio: 3 / 4,
-                                    crossAxisSpacing: 20,
-                                    mainAxisSpacing: 20),
-                                itemCount: devices.length,
+                              padding: const EdgeInsets.only(top: 10, bottom: 20),
+                              gridDelegate:
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 200,
+                                  childAspectRatio: 3 / 4,
+                                  crossAxisSpacing: 20,
+                                  mainAxisSpacing: 20),
+                              itemCount: devices.length,
                               itemBuilder: (BuildContext ctx, index) {
                                 bool isInteractive = devices[index].name != 'Statistics' &&
                                     devices[index].name != 'About us';
@@ -212,19 +219,20 @@ class _HomePageState extends State<HomePage> {
                                   onChanged: isInteractive
                                       ? (val) {
                                     setState(() {
-                                      devices[index].isActive = !devices[index].isActive;
+                                      devices[index].isActive = val;
                                     });
-                                    // Gọi hàm `changeMode` bằng cách truyền tên thiết bị và chế độ
-                                    final newMode = devices[index].isActive ? 'automatic' : 'manual';
+                                    final newMode = val ? 'automatic' : 'manual';
                                     changeMode(devices[index].name, newMode);
                                   }
                                       : null,
                                   mode: mode,
-                                  changeMode: null, // Không truyền `changeMode` ở đây
+                                  changeMode: (newMode) {
+                                    changeMode(devices[index].name, newMode);
+                                  },
                                 );
                               },
                             ),
-                            ),
+                          ),
                         ],
                       ),
                     ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import 'package:An_Smart_Farm_IOT/constants.dart';
 
 class ControlPage extends StatefulWidget {
@@ -12,7 +13,47 @@ class _ControlPageState extends State<ControlPage> {
   bool isLoading = false;
   bool isCurtainOpen = false;
   bool isPumpOn = false;
-  double fanSpeed = 1;
+  bool isAutomaticFan = false;
+  bool isAutomaticCurtain = false;
+  bool isAutomaticPump = false;
+  double fanSpeed = 0;
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchData();
+  }
+
+  void fetchData() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      String hostname = await getMdnsHostname();
+      final response = await http.get(Uri.parse('$hostname/data'));
+      print("Url : " + Uri.parse('$hostname/data').toString());
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          isAutomaticFan = data['automaticFan'];
+          isAutomaticCurtain = data['automaticCurtain'];
+          isAutomaticPump = data['automaticPump'];
+          isPumpOn = data['pumpStatus'];
+          isCurtainOpen = data['curtainStatus'];
+          fanSpeed = (data['fanStatus'] as num).toDouble();
+        });
+      } else {
+        showSnackbar('Error: ${response.statusCode} ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      showSnackbar('Error: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   void showSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -25,10 +66,14 @@ class _ControlPageState extends State<ControlPage> {
       isLoading = true;
     });
     try {
-      final url = Uri.parse('http://$flaskIp/$endpoint');
+      String hostname = await getMdnsHostname();
+      final url = Uri.parse('$hostname/$endpoint');
       final response = await http.post(url, body: '');
-      final responseData = json.decode(response.body);
-      showSnackbar(responseData['message']);
+      if (response.statusCode == 200) {
+        fetchData(); // Fetch latest data after sending command
+      } else {
+        showSnackbar('Error: ${response.statusCode} ${response.reasonPhrase}');
+      }
     } catch (e) {
       showSnackbar('Error: $e');
     } finally {
@@ -36,6 +81,20 @@ class _ControlPageState extends State<ControlPage> {
         isLoading = false;
       });
     }
+  }
+
+  void _onFanSpeedChanged(double value) {
+    setState(() {
+      fanSpeed = value;
+    });
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      sendCommand(
+        'fan/set?speed=${value.round()}',
+        'Setting Fan Speed to ${value.round()}',
+      );
+    });
   }
 
   @override
@@ -65,7 +124,9 @@ class _ControlPageState extends State<ControlPage> {
                   color: Colors.orange,
                   child: Switch(
                     value: isCurtainOpen,
-                    onChanged: (value) {
+                    onChanged: isAutomaticCurtain
+                        ? null
+                        : (value) {
                       setState(() {
                         isCurtainOpen = value;
                       });
@@ -82,20 +143,10 @@ class _ControlPageState extends State<ControlPage> {
                   color: Colors.blue,
                   child: Slider(
                     value: fanSpeed,
-                    min: 1,
-                    max: 3,
-                    divisions: 2,
+                    min: 0,
+                    max: 255,
                     label: fanSpeed.round().toString(),
-                    onChanged: (value) {
-                      setState(() {
-                        fanSpeed = value;
-                      });
-                      int speed = (value == 1) ? 100 : (value == 2) ? 200 : 255;
-                      sendCommand(
-                        'fan/set?speed=$speed',
-                        'Setting Fan Speed to $speed',
-                      );
-                    },
+                    onChanged: isAutomaticFan ? null : _onFanSpeedChanged,
                   ),
                 ),
                 controlCard(
@@ -104,7 +155,9 @@ class _ControlPageState extends State<ControlPage> {
                   color: Colors.green,
                   child: Switch(
                     value: isPumpOn,
-                    onChanged: (value) {
+                    onChanged: isAutomaticPump
+                        ? null
+                        : (value) {
                       setState(() {
                         isPumpOn = value;
                       });
