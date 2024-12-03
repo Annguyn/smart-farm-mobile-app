@@ -18,11 +18,21 @@ class _ControlPageState extends State<ControlPage> {
   bool isAutomaticPump = false;
   double fanSpeed = 0;
   Timer? _debounce;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     fetchData();
+    _timer = Timer.periodic(Duration(seconds: 2), (timer) {
+      fetchData();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   void fetchData() async {
@@ -36,12 +46,12 @@ class _ControlPageState extends State<ControlPage> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-          isAutomaticFan = data['automaticFan'];
-          isAutomaticCurtain = data['automaticCurtain'];
-          isAutomaticPump = data['automaticPump'];
-          isPumpOn = data['pumpStatus'];
-          isCurtainOpen = data['curtainStatus'];
-          fanSpeed = (data['fanStatus'] as num).toDouble();
+          isAutomaticFan = data['deviceStatus']['automaticFan'];
+          isAutomaticCurtain = data['deviceStatus']['automaticCurtain'];
+          isAutomaticPump = data['deviceStatus']['automaticPump'];
+          isPumpOn = data['deviceStatus']['pumpStatus'];
+          isCurtainOpen = data['deviceStatus']['curtainStatus'];
+          fanSpeed = (data['deviceStatus']['fanStatus'] as int).toDouble();  // Convert int to double
         });
       } else {
         showSnackbar('Error: ${response.statusCode} ${response.reasonPhrase}');

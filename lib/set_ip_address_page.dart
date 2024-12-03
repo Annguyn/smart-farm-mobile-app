@@ -19,13 +19,23 @@ class _SetIpAddressPageState extends State<SetIpAddressPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? ipAddress = prefs.getString('mdnsHostname');
     if (ipAddress != null) {
+      // Remove 'http://' and ':5000' if present
+      ipAddress = ipAddress.replaceFirst('http://', '').replaceFirst(':5000', '');
       _controller.text = ipAddress;
     }
   }
 
   _saveIpAddress() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('mdnsHostname', _controller.text);
+    String ipAddress = _controller.text;
+    // Prepend 'http://' and append ':5000' if not already present
+    if (!ipAddress.startsWith('http://')) {
+      ipAddress = 'http://' + ipAddress;
+    }
+    if (!ipAddress.endsWith(':5000')) {
+      ipAddress = ipAddress + ':5000';
+    }
+    await prefs.setString('mdnsHostname', ipAddress);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('IP Address saved successfully!')),
     );

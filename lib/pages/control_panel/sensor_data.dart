@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:An_Smart_Farm_IOT/pages/control_panel/widgets/option_widget.dart';
@@ -45,11 +46,21 @@ class _ControlPanelPageState extends State<ControlPanelPage> with TickerProvider
     const Color(0xFFC421A0),
     const Color(0xFFE4262F)
   ], rangeStart: 0.0, rangeEnd: 1.0);
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     fetchSensorData();
+    _timer = Timer.periodic(Duration(seconds: 2), (timer) {
+      fetchSensorData();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   Future<void> fetchSensorData() async {
@@ -95,7 +106,6 @@ class _ControlPanelPageState extends State<ControlPanelPage> with TickerProvider
       print('Error fetching sensor data: $e');
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -270,7 +280,6 @@ class _ControlPanelPageState extends State<ControlPanelPage> with TickerProvider
     );
   }
 
-
   Widget sensorCard(String title, String value) {
     return Expanded(
       child: Card(
@@ -323,7 +332,6 @@ class _ControlPanelPageState extends State<ControlPanelPage> with TickerProvider
       ],
     );
   }
-
 
   Widget statusCard(String title, bool status) {
     return Expanded(

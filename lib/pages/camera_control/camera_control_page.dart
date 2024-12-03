@@ -12,8 +12,16 @@ class CameraControlPage extends StatefulWidget {
 
 class _CameraControlPageState extends State<CameraControlPage> {
   bool isActive = false;
+  bool isDisposed = false;
+
+  @override
+  void dispose() {
+    isDisposed = true;
+    super.dispose();
+  }
 
   Future<void> captureImage() async {
+    if (isDisposed) return;
     String hostname = await getMdnsHostname();
     final url = Uri.parse('$hostname/capture');
     final response = await http.get(url);
@@ -27,6 +35,7 @@ class _CameraControlPageState extends State<CameraControlPage> {
   }
 
   Future<void> sendServoCommand(String direction) async {
+    if (isDisposed) return;
     String hostname = await getMdnsHostname();
     final url = Uri.parse('$hostname/servo/$direction');
     final response = await http.post(url);
@@ -39,6 +48,7 @@ class _CameraControlPageState extends State<CameraControlPage> {
   }
 
   Future<void> predictDisease() async {
+    if (isDisposed) return;
     String hostname = await getMdnsHostname();
     final url = Uri.parse('$hostname/predict');
     final response = await http.post(url);
@@ -89,13 +99,16 @@ class _CameraControlPageState extends State<CameraControlPage> {
                           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
                         ),
                         child: Center(
-                          child: Mjpeg(
+                          child: isDisposed
+                              ? Center(child: Text('Stream is not available'))
+                              : Mjpeg(
                             stream: '$mdnsHostname/stream',
                             isLive: true,
                             error: (context, error, stack) {
                               return Center(child: Text('Error: $error'));
                             },
                           ),
+
                         ),
                       ),
                       const SizedBox(height: 20),

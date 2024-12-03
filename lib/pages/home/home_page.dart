@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -21,7 +22,7 @@ class _HomePageState extends State<HomePage> {
         name: 'Control Panel',
         isActive: true,
         color: "#33c0ba",
-        icon: 'assets/svg/fan-solid.svg'),
+        icon: 'assets/svg/power-off-solid.svg'),
     DeviceModel(
         name: 'Smart water pump',
         isActive: true,
@@ -46,28 +47,65 @@ class _HomePageState extends State<HomePage> {
         name: 'Smart Curtain',
         isActive: false,
         color: "#c207db",
-        icon: 'assets/svg/speaker.svg'),
+        icon: 'assets/svg/people-roof-solid.svg'),
     DeviceModel(
         name: 'Smart Fan',
         isActive: false,
         color: "#c207db",
-        icon: 'assets/svg/speaker.svg'),
+        icon: 'assets/svg/fan-solid.svg'),
     DeviceModel(
         name: 'Statistics',
         isActive: false,
         color: "#c207db",
-        icon: 'assets/svg/speaker.svg'),
+        icon: 'assets/svg/chart-column-solid.svg'),
     DeviceModel(
         name: 'About us',
         isActive: false,
         color: "#c207db",
-        icon: 'assets/svg/speaker.svg'),
+        icon: 'assets/svg/address-card-regular.svg'),
     DeviceModel(
         name: 'Settings',
         isActive: false,
         color: "#c207db",
-        icon: 'assets/svg/speaker.svg'),
+        icon: 'assets/svg/gear-solid.svg'),
   ];
+
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchData();
+    _timer = Timer.periodic(Duration(seconds: 2), (timer) {
+      fetchData();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> fetchData() async {
+    try {
+      String hostname = await getMdnsHostname();
+      final response = await http.get(Uri.parse('$hostname/data'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          mode = data['deviceStatus']['automaticFan'] ? 'automatic' : 'manual';
+          devices.firstWhere((d) => d.name == 'Smart Fan').isActive = data['deviceStatus']['automaticFan'];
+          devices.firstWhere((d) => d.name == 'Smart Curtain').isActive = data['deviceStatus']['automaticCurtain'];
+          devices.firstWhere((d) => d.name == 'Smart water pump').isActive = data['deviceStatus']['automaticPump'];
+        });
+      } else {
+        print('Error: ${response.statusCode} ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
 
   Future<void> changeMode(String device, String newMode) async {
     final endpoint = {
