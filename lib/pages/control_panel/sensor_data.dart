@@ -3,28 +3,23 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:An_Smart_Farm_IOT/pages/control_panel/widgets/option_widget.dart';
 import 'package:An_Smart_Farm_IOT/pages/control_panel/options_enum.dart';
-import 'package:An_Smart_Farm_IOT/pages/control_panel/widgets/power_widget.dart';
 import 'package:An_Smart_Farm_IOT/pages/control_panel/widgets/slider/slider_widget.dart';
-import 'package:An_Smart_Farm_IOT/pages/control_panel/widgets/speed_widget.dart';
-import 'package:An_Smart_Farm_IOT/pages/control_panel/widgets/temp_widget.dart';
-import 'package:An_Smart_Farm_IOT/utils/slider_utils.dart';
-import 'package:An_Smart_Farm_IOT/widgets/custom_appbar.dart';
-import 'package:rainbow_color/rainbow_color.dart';
 import 'package:http/http.dart' as http;
 import 'package:An_Smart_Farm_IOT/constants.dart';
+
+import '../../utils/slider_utils.dart';
 
 class ControlPanelPage extends StatefulWidget {
   final String tag;
 
   const ControlPanelPage({Key? key, required this.tag}) : super(key: key);
+
   @override
   _ControlPanelPageState createState() => _ControlPanelPageState();
 }
 
-class _ControlPanelPageState extends State<ControlPanelPage> with TickerProviderStateMixin {
+class _ControlPanelPageState extends State<ControlPanelPage> {
   Options option = Options.temperature;
-  bool isActive = false;
-  int speed = 1;
   double temp = 22.85;
   double humidity = 45.0;
   double soilMoisture = 30.0;
@@ -38,14 +33,6 @@ class _ControlPanelPageState extends State<ControlPanelPage> with TickerProvider
   bool automaticFan = false;
   bool automaticPump = false;
   bool automaticCurtain = false;
-  double progressVal = 0.49;
-  var activeColor = Rainbow(spectrum: [
-    const Color(0xFF33C0BA),
-    const Color(0xFF1086D4),
-    const Color(0xFF6D04E2),
-    const Color(0xFFC421A0),
-    const Color(0xFFE4262F)
-  ], rangeStart: 0.0, rangeEnd: 1.0);
   Timer? _timer;
 
   @override
@@ -67,7 +54,6 @@ class _ControlPanelPageState extends State<ControlPanelPage> with TickerProvider
     try {
       String hostname = await getMdnsHostname();
       final response = await http.get(Uri.parse('$hostname/data'));
-      print("Url : " + Uri.parse('$hostname/data').toString());
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
@@ -85,22 +71,6 @@ class _ControlPanelPageState extends State<ControlPanelPage> with TickerProvider
           automaticPump = data['automaticPump'] == 1;
           automaticCurtain = data['automaticCurtain'] == 1;
         });
-        // Print values to debug
-        print('Temperature: $temp');
-        print('Humidity: $humidity');
-        print('Soil Moisture: $soilMoisture');
-        print('Distance: $distance');
-        print('Light: $light');
-        print('Water Level Status: $waterLevelStatus');
-        print('Sound Status: $soundStatus');
-        print('Fan Status: $fanStatus');
-        print('Pump Status: $pumpStatus');
-        print('Curtain Status: $curtainStatus');
-        print('Automatic Fan: $automaticFan');
-        print('Automatic Pump: $automaticPump');
-        print('Automatic Curtain: $automaticCurtain');
-      } else {
-        print('Failed to load sensor data');
       }
     } catch (e) {
       print('Error fetching sensor data: $e');
@@ -110,32 +80,38 @@ class _ControlPanelPageState extends State<ControlPanelPage> with TickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: 'Sensor Data'),
+      appBar: AppBar(
+        title: Text('Control Panel'),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blueAccent, Colors.teal],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+      ),
       body: Container(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.blue, Colors.green],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            colors: [Colors.black87, Colors.blue.shade50],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                options(),
-                const SizedBox(height: 20),
-                slider(),
-                const SizedBox(height: 20),
-                sensorData(),
-                const SizedBox(height: 20),
-                statuses(),
-              ],
-            ),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              options(),
+              const SizedBox(height: 20),
+              slider(),
+              const SizedBox(height: 20),
+              sensorData(),
+              const SizedBox(height: 20),
+              statuses(),
+            ],
           ),
         ),
       ),
@@ -145,209 +121,166 @@ class _ControlPanelPageState extends State<ControlPanelPage> with TickerProvider
   Widget options() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        OptionWidget(
-          icon: Icons.thermostat,
+      children: Options.values.map((opt) {
+        return OptionWidget(
+          icon: _getOptionIcon(opt),
           size: 50,
-          label: 'Temperature',
-          selected: option == Options.temperature,
+          label: _getOptionLabel(opt),
+          selected: option == opt,
           onTap: () {
             setState(() {
-              option = Options.temperature;
+              option = opt;
             });
           },
-        ),
-        OptionWidget(
-          icon: Icons.water_drop,
-          size: 50,
-          label: 'Humidity',
-          selected: option == Options.humidity,
-          onTap: () {
-            setState(() {
-              option = Options.humidity;
-            });
-          },
-        ),
-        OptionWidget(
-          icon: Icons.grass,
-          size: 50,
-          label: 'Soil Moisture',
-          selected: option == Options.soilMoisture,
-          onTap: () {
-            setState(() {
-              option = Options.soilMoisture;
-            });
-          },
-        ),
-        OptionWidget(
-          icon: Icons.straighten,
-          size: 50,
-          label: 'Distance',
-          selected: option == Options.distance,
-          onTap: () {
-            setState(() {
-              option = Options.distance;
-            });
-          },
-        ),
-      ],
+        );
+      }).toList(),
     );
+  }
+
+  IconData _getOptionIcon(Options opt) {
+    switch (opt) {
+      case Options.temperature:
+        return Icons.thermostat;
+      case Options.humidity:
+        return Icons.water_drop;
+      case Options.soilMoisture:
+        return Icons.grass;
+      case Options.distance:
+        return Icons.straighten;
+      default:
+        return Icons.device_unknown;
+    }
+  }
+
+  String _getOptionLabel(Options opt) {
+    switch (opt) {
+      case Options.temperature:
+        return 'Temperature';
+      case Options.humidity:
+        return 'Humidity';
+      case Options.soilMoisture:
+        return 'Soil Moisture';
+      case Options.distance:
+        return 'Distance';
+      default:
+        return 'Unknown';
+    }
   }
 
   Widget slider() {
-    double value;
-    String unit;
-    switch (option) {
-      case Options.temperature:
-        value = temp;
-        unit = "°C";
-        progressVal = normalize(temp, kMinTemperature, kMaxTemperature);
-        break;
-      case Options.humidity:
-        value = humidity;
-        unit = "%";
-        progressVal = normalize(humidity, kMinHumidity, kMaxHumidity);
-        break;
-      case Options.soilMoisture:
-        value = soilMoisture;
-        unit = "%";
-        progressVal = normalize(soilMoisture, kMinSoilMoisture, kMaxSoilMoisture);
-        break;
-      case Options.distance:
-        value = distance;
-        unit = "cm";
-        progressVal = normalize(distance, kMinDistance, kMaxDistance);
-        break;
-      default:
-        value = 0.0;
-        unit = "";
-    }
-
     return Column(
       children: [
+        Text(
+          '${_getOptionLabel(option)}: ${_getSensorValue(option)}',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         SliderWidget(
-          progressVal: progressVal,
-          color: activeColor[progressVal],
-          onChange: (val) {
-            setState(() {
-              progressVal = normalize(val, kMinTemperature, kMaxTemperature); // Change based on selected option
-            });
+          progressVal: normalize(_getSensorValue(option), 0, 100),
+          color: Colors.blueAccent,
+          unit: _getUnit(option),
+          realValue: _getSensorValue(option),
+          onChange: (value) {
+            setState(() {});
           },
-          unit: unit,
-          realValue: value,
         ),
       ],
     );
   }
 
+  double _getSensorValue(Options opt) {
+    switch (opt) {
+      case Options.temperature:
+        return temp;
+      case Options.humidity:
+        return humidity;
+      case Options.soilMoisture:
+        return soilMoisture;
+      case Options.distance:
+        return distance;
+      default:
+        return 0.0;
+    }
+  }
+
+  String _getUnit(Options opt) {
+    switch (opt) {
+      case Options.temperature:
+        return '°C';
+      case Options.humidity:
+        return '%';
+      case Options.soilMoisture:
+        return '%';
+      case Options.distance:
+        return 'cm';
+      default:
+        return '';
+    }
+  }
+
   Widget sensorData() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
       children: [
-        Text('Sensor Data', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            sensorCard('Temperature', '$temp °C'),
-            sensorCard('Humidity', '$humidity %'),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            sensorCard('Soil Moisture', '$soilMoisture %'),
-            sensorCard('Light', '$light lx'),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            sensorCard('Distance', '$distance cm'),
-            sensorCard('Water Level', waterLevelStatus ? 'Full' : 'Empty'),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            sensorCard('Sound', soundStatus ? 'Detected' : 'Not Detected'),
-          ],
-        ),
+        sensorCard('Temperature', '$temp °C'),
+        sensorCard('Humidity', '$humidity %'),
+        sensorCard('Soil Moisture', '$soilMoisture %'),
+        sensorCard('Distance', '$distance cm'),
+        sensorCard('Light', '$light lx'),
+        sensorCard('Water Level', waterLevelStatus ? 'Full' : 'Empty'),
+        sensorCard('Sound', soundStatus ? 'Detected' : 'Not Detected'),
       ],
     );
   }
 
   Widget sensorCard(String title, String value) {
-    return Expanded(
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        elevation: 5,
-        child: Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 5),
-              Text(value, style: TextStyle(fontSize: 14)),
-            ],
-          ),
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 6,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(value, style: TextStyle(fontSize: 14, color: Colors.blueGrey)),
+          ],
         ),
       ),
     );
   }
 
   Widget statuses() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
       children: [
-        Text('Statuses', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            statusCard('Fan', fanStatus),
-            statusCard('Pump', pumpStatus),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            statusCard('Curtain', curtainStatus),
-            statusCard('Automatic Fan', automaticFan),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            statusCard('Automatic Pump', automaticPump),
-            statusCard('Automatic Curtain', automaticCurtain),
-          ],
-        ),
+        statusCard('Fan', fanStatus),
+        statusCard('Pump', pumpStatus),
+        statusCard('Curtain', curtainStatus),
+        statusCard('Automatic Fan', automaticFan),
+        statusCard('Automatic Pump', automaticPump),
+        statusCard('Automatic Curtain', automaticCurtain),
       ],
     );
   }
 
   Widget statusCard(String title, bool status) {
-    return Expanded(
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        elevation: 5,
-        child: Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 5),
-              Text(status ? 'Active' : 'Inactive', style: TextStyle(fontSize: 14)),
-            ],
-          ),
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 6,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Icon(
+              status ? Icons.check_circle : Icons.cancel,
+              color: status ? Colors.green : Colors.red,
+            ),
+          ],
         ),
       ),
     );

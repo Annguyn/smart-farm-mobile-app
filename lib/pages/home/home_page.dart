@@ -94,10 +94,10 @@ class _HomePageState extends State<HomePage> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-          mode = data['deviceStatus']['automaticFan'] ? 'automatic' : 'manual';
-          devices.firstWhere((d) => d.name == 'Smart Fan').isActive = data['deviceStatus']['automaticFan'];
-          devices.firstWhere((d) => d.name == 'Smart Curtain').isActive = data['deviceStatus']['automaticCurtain'];
-          devices.firstWhere((d) => d.name == 'Smart water pump').isActive = data['deviceStatus']['automaticPump'];
+          mode = data['automaticFan'] ? 'automatic' : 'manual';
+          devices.firstWhere((d) => d.name == 'Smart Fan').isActive = data['automaticFan'];
+          devices.firstWhere((d) => d.name == 'Smart Curtain').isActive = data['automaticCurtain'];
+          devices.firstWhere((d) => d.name == 'Smart water pump').isActive = data['automaticPump'];
         });
       } else {
         print('Error: ${response.statusCode} ${response.reasonPhrase}');

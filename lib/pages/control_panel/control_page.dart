@@ -42,16 +42,15 @@ class _ControlPageState extends State<ControlPage> {
     try {
       String hostname = await getMdnsHostname();
       final response = await http.get(Uri.parse('$hostname/data'));
-      print("Url : " + Uri.parse('$hostname/data').toString());
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-          isAutomaticFan = data['deviceStatus']['automaticFan'];
-          isAutomaticCurtain = data['deviceStatus']['automaticCurtain'];
-          isAutomaticPump = data['deviceStatus']['automaticPump'];
-          isPumpOn = data['deviceStatus']['pumpStatus'];
-          isCurtainOpen = data['deviceStatus']['curtainStatus'];
-          fanSpeed = (data['deviceStatus']['fanStatus'] as int).toDouble();  // Convert int to double
+          isAutomaticFan = data['automaticFan'] == 1;
+          isAutomaticCurtain = data['automaticCurtain'] == 1;
+          isAutomaticPump = data['automaticPump'] == 1;
+          isPumpOn = data['pumpStatus'] == 1;
+          isCurtainOpen = data['curtainStatus'] == 1;
+          fanSpeed = (data['fanStatus'] as num).toDouble(); // Handle numeric conversion safely
         });
       } else {
         showSnackbar('Error: ${response.statusCode} ${response.reasonPhrase}');
@@ -80,7 +79,7 @@ class _ControlPageState extends State<ControlPage> {
       final url = Uri.parse('$hostname/$endpoint');
       final response = await http.post(url, body: '');
       if (response.statusCode == 200) {
-        fetchData(); // Fetch latest data after sending command
+        fetchData();
       } else {
         showSnackbar('Error: ${response.statusCode} ${response.reasonPhrase}');
       }
@@ -132,6 +131,7 @@ class _ControlPageState extends State<ControlPage> {
                   icon: Icons.curtains,
                   label: 'Curtain',
                   color: Colors.orange,
+                  status: isCurtainOpen ? "Open" : "Closed",
                   child: Switch(
                     value: isCurtainOpen,
                     onChanged: isAutomaticCurtain
@@ -151,10 +151,12 @@ class _ControlPageState extends State<ControlPage> {
                   icon: Icons.speed,
                   label: 'Fan Speed',
                   color: Colors.blue,
+                  status: '${fanSpeed.round()}',
                   child: Slider(
                     value: fanSpeed,
                     min: 0,
                     max: 255,
+                    divisions: 255,
                     label: fanSpeed.round().toString(),
                     onChanged: isAutomaticFan ? null : _onFanSpeedChanged,
                   ),
@@ -163,6 +165,7 @@ class _ControlPageState extends State<ControlPage> {
                   icon: Icons.water_drop,
                   label: 'Pump',
                   color: Colors.green,
+                  status: isPumpOn ? "On" : "Off",
                   child: Switch(
                     value: isPumpOn,
                     onChanged: isAutomaticPump
@@ -182,8 +185,15 @@ class _ControlPageState extends State<ControlPage> {
             ),
           ),
           if (isLoading)
-            Center(
-              child: CircularProgressIndicator(),
+            Positioned.fill(
+              child: Container(
+                color: Colors.black54,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ),
         ],
       ),
@@ -194,35 +204,52 @@ class _ControlPageState extends State<ControlPage> {
     required IconData icon,
     required String label,
     required Color color,
+    required String status,
     required Widget child,
   }) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 5,
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          children: [
-            Icon(icon, size: 40, color: color),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+      elevation: 6,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [color.withOpacity(0.3), color],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Icon(icon, size: 50, color: Colors.white),
+              SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  child,
-                ],
+                    SizedBox(height: 5),
+                    Text(
+                      'Status: $status',
+                      style: TextStyle(fontSize: 16, color: Colors.white70),
+                    ),
+                    SizedBox(height: 10),
+                    child,
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

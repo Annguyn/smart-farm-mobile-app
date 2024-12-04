@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:An_Smart_Farm_IOT/widgets/custom_appbar.dart';
 import 'package:flutter_mjpeg/flutter_mjpeg.dart';
 import 'package:An_Smart_Farm_IOT/constants.dart';
 
@@ -11,8 +10,9 @@ class CameraControlPage extends StatefulWidget {
 }
 
 class _CameraControlPageState extends State<CameraControlPage> {
-  bool isActive = false;
   bool isDisposed = false;
+  bool isCapturing = false;
+  bool isPredicting = false;
 
   @override
   void dispose() {
@@ -22,190 +22,249 @@ class _CameraControlPageState extends State<CameraControlPage> {
 
   Future<void> captureImage() async {
     if (isDisposed) return;
-    String hostname = await getMdnsHostname();
-    final url = Uri.parse('$hostname/capture');
-    final response = await http.get(url);
-    print("Url : " + url.toString());
+    setState(() {
+      isCapturing = true;
+    });
 
-    if (response.statusCode == 200) {
-      print("Image captured successfully!");
-    } else {
-      print("Failed to capture image.");
+    try {
+      String hostname = await getMdnsHostname();
+      final url = Uri.parse('$hostname/capture');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Image captured successfully!")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to capture image.")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    } finally {
+      setState(() {
+        isCapturing = false;
+      });
     }
   }
 
   Future<void> sendServoCommand(String direction) async {
     if (isDisposed) return;
-    String hostname = await getMdnsHostname();
-    final url = Uri.parse('$hostname/servo/$direction');
-    final response = await http.post(url);
-    print("Url : " + url.toString());
-    if (response.statusCode == 200) {
-      print("Servo moved $direction successfully!");
-    } else {
-      print("Failed to move servo $direction.");
+    try {
+      String hostname = await getMdnsHostname();
+      final url = Uri.parse('$hostname/servo/$direction');
+      await http.post(url);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error sending servo command: $e")),
+      );
     }
   }
 
   Future<void> predictDisease() async {
     if (isDisposed) return;
-    String hostname = await getMdnsHostname();
-    final url = Uri.parse('$hostname/predict');
-    final response = await http.post(url);
-    print("Url : " + url.toString());
+    setState(() {
+      isPredicting = true;
+    });
 
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
-      String predictedClass = jsonResponse['predicted_class'];
-      double confidence = jsonResponse['confidence'];
-      print("Prediction: $predictedClass, Confidence: $confidence%");
+    try {
+      String hostname = await getMdnsHostname();
+      final url = Uri.parse('$hostname/predict');
+      final response = await http.post(url);
 
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        String predictedClass = jsonResponse['predicted_class'];
+        double confidence = jsonResponse['confidence'];
+
+        showModalBottomSheet(
+          context: context,
+          builder: (context) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Prediction",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    "Class: $predictedClass",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  Text(
+                    "Confidence: ${confidence.toStringAsFixed(2)}%",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to get prediction.")),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Prediction: $predictedClass ($confidence%)")),
+        SnackBar(content: Text("Error: $e")),
       );
-    } else {
-      print("Failed to get prediction.");
+    } finally {
+      setState(() {
+        isPredicting = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[Colors.white, Colors.teal.withOpacity(0.5), Colors.teal],
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
-            child: Column(
-              children: [
-                const CustomAppBar(title: "Camera Control"),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        height: MediaQuery.of(context).size.height / 2,
-                        decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-                        ),
-                        child: Center(
-                          child: isDisposed
-                              ? Center(child: Text('Stream is not available'))
-                              : Mjpeg(
-                            stream: '$mdnsHostname/stream',
-                            isLive: true,
-                            error: (context, error, stack) {
-                              return Center(child: Text('Error: $error'));
-                            },
-                          ),
-
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: InkWell(
-                                onTap: captureImage,
-                                borderRadius: BorderRadius.circular(10),
-                                child: Ink(
-                                  decoration: BoxDecoration(
-                                    color: Colors.teal,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    child: Center(
-                                      child: Text(
-                                        'Capture',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: InkWell(
-                                onTap: predictDisease,
-                                borderRadius: BorderRadius.circular(10),
-                                child: Ink(
-                                  decoration: BoxDecoration(
-                                    color: Colors.teal,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    child: Center(
-                                      child: Text(
-                                        'Predict Disease',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      // Control Buttons
-                      Column(
-                        children: [
-                          IconButton(
-                            onPressed: () => sendServoCommand('up'),
-                            icon: Icon(Icons.arrow_upward, size: 50, color: Colors.teal),
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              IconButton(
-                                onPressed: () => sendServoCommand('left'),
-                                icon: Icon(Icons.arrow_back, size: 50, color: Colors.teal),
-                              ),
-                              const SizedBox(width: 20),
-                              IconButton(
-                                onPressed: () => sendServoCommand('right'),
-                                icon: Icon(Icons.arrow_forward, size: 50, color: Colors.teal),
-                              ),
-                            ],
-                          ),
-                          IconButton(
-                            onPressed: () => sendServoCommand('down'),
-                            icon: Icon(Icons.arrow_downward, size: 50, color: Colors.teal),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+      appBar: AppBar(
+        title: Text("Camera Control"),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.teal, Colors.blueAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
         ),
+      ),
+      body: Container(
+      decoration: BoxDecoration(
+      gradient: LinearGradient(
+      colors: [Colors.white, Colors.teal.withOpacity(0.1)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ),
+    ),
+    child: Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+    children: [
+    Expanded(
+    child: Container(
+    decoration: BoxDecoration(
+    color: Colors.black,
+    borderRadius: BorderRadius.circular(16),
+    boxShadow: [
+    BoxShadow(
+    color: Colors.black26,
+    blurRadius: 8,
+    offset: Offset(2, 2),
+    ),
+    ],
+    ),
+    child: isDisposed
+    ? Center(
+    child: Text(
+    'Stream is not available',
+    style: TextStyle(color: Colors.white),
+    ),
+    )
+        : ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Mjpeg(
+        stream: '$mdnsHostname/stream',
+        isLive: true,
+        error: (context, error, stack) => Center(
+          child: Text(
+            'Error: $error',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ),
+    ),
+    ),
+    ),
+      SizedBox(height: 20),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          buildActionButton(
+            onPressed: isCapturing ? null : captureImage,
+            icon: Icons.camera_alt,
+            label: 'Capture',
+            isLoading: isCapturing,
+          ),
+          buildActionButton(
+            onPressed: isPredicting ? null : predictDisease,
+            icon: Icons.search,
+            label: 'Predict',
+            isLoading: isPredicting,
+          ),
+        ],
+      ),
+      SizedBox(height: 20),
+      Column(
+        children: [
+          IconButton(
+            onPressed: () => sendServoCommand('up'),
+            icon: Icon(Icons.arrow_upward, size: 40, color: Colors.teal),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                onPressed: () => sendServoCommand('left'),
+                icon: Icon(Icons.arrow_back, size: 40, color: Colors.teal),
+              ),
+              SizedBox(width: 20),
+              IconButton(
+                onPressed: () => sendServoCommand('right'),
+                icon: Icon(Icons.arrow_forward, size: 40, color: Colors.teal),
+              ),
+            ],
+          ),
+          IconButton(
+            onPressed: () => sendServoCommand('down'),
+            icon: Icon(Icons.arrow_downward, size: 40, color: Colors.teal),
+          ),
+        ],
+      ),
+    ],
+    ),
+    ),
+      ),
+    );
+  }
+
+  Widget buildActionButton({
+    required VoidCallback? onPressed,
+    required IconData icon,
+    required String label,
+    bool isLoading = false,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        backgroundColor: Colors.teal,
+        foregroundColor: Colors.white,
+      ),
+      icon: isLoading
+          ? SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(
+          color: Colors.white,
+          strokeWidth: 2,
+        ),
+      )
+          : Icon(icon, size: 24),
+      label: Text(
+        label,
+        style: TextStyle(fontSize: 16),
       ),
     );
   }
