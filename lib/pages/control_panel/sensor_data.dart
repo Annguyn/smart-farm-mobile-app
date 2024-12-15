@@ -227,8 +227,8 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
         sensorCard('Soil Moisture', '$soilMoisture %'),
         sensorCard('Distance', '$distance cm'),
         sensorCard('Light', '$light lx'),
-        sensorCard('Water Level', waterLevelStatus ? 'Full' : 'Empty'),
-        sensorCard('Sound', soundStatus ? 'Detected' : 'Not Detected'),
+        sensorCard('Water Level', '$waterLevelStatus '),
+        sensorCard('Sound', '$soundStatus'),
       ],
     );
   }

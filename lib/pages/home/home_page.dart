@@ -39,7 +39,7 @@ class _HomePageState extends State<HomePage> {
         color: "#c9c306",
         icon: 'assets/svg/temperature-three-quarters-solid.svg'),
     DeviceModel(
-        name: 'Smart Sound',
+        name: 'Smart Light',
         isActive: false,
         color: "#c207db",
         icon: 'assets/svg/speaker.svg'),
@@ -95,6 +95,7 @@ class _HomePageState extends State<HomePage> {
         final data = json.decode(response.body);
         setState(() {
           mode = data['automaticFan'] ? 'automatic' : 'manual';
+          devices.firstWhere((d) => d.name == 'Smart Light').isActive = data['automaticLight'];
           devices.firstWhere((d) => d.name == 'Smart Fan').isActive = data['automaticFan'];
           devices.firstWhere((d) => d.name == 'Smart Curtain').isActive = data['automaticCurtain'];
           devices.firstWhere((d) => d.name == 'Smart water pump').isActive = data['automaticPump'];
@@ -112,6 +113,7 @@ class _HomePageState extends State<HomePage> {
       'Smart Curtain': 'curtain',
       'Smart Fan': 'fan',
       'Smart water pump': 'pump',
+      'Smart Light': 'light',
     };
 
     final deviceEndpoint = endpoint[device];

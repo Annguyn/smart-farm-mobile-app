@@ -2,29 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
-import 'package:An_Smart_Farm_IOT/constants.dart';
 
 class ControlPage extends StatefulWidget {
   @override
   _ControlPageState createState() => _ControlPageState();
 }
 
-class _ControlPageState extends State<ControlPage> {
-  bool isLoading = false;
+class _ControlPageState extends State<ControlPage>
+    with SingleTickerProviderStateMixin {
   bool isCurtainOpen = false;
   bool isPumpOn = false;
   bool isAutomaticFan = false;
+  bool isLightOn = false;
+  bool isAutomaticLight = false;
   bool isAutomaticCurtain = false;
   bool isAutomaticPump = false;
+  bool isCurtainInProgress = false;
   double fanSpeed = 0;
   Timer? _debounce;
   Timer? _timer;
+
+  late AnimationController _fanController;
 
   @override
   void initState() {
     super.initState();
     fetchData();
-    _timer = Timer.periodic(Duration(seconds: 2), (timer) {
+    _fanController =
+    AnimationController(vsync: this, duration: Duration(seconds: 1))
+      ..repeat();
+    _timer = Timer.periodic(Duration(seconds: 5), (timer) {
       fetchData();
     });
   }
@@ -32,35 +39,30 @@ class _ControlPageState extends State<ControlPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _fanController.dispose();
     super.dispose();
   }
 
   void fetchData() async {
-    setState(() {
-      isLoading = true;
-    });
     try {
-      String hostname = await getMdnsHostname();
-      final response = await http.get(Uri.parse('$hostname/data'));
+      final response = await http.get(Uri.parse('http://your-api-url/data'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
           isAutomaticFan = data['automaticFan'] == 1;
           isAutomaticCurtain = data['automaticCurtain'] == 1;
           isAutomaticPump = data['automaticPump'] == 1;
+          isAutomaticLight = data['automaticLight'] == 1;
+          isLightOn = data['ledStatus'] == 1;
           isPumpOn = data['pumpStatus'] == 1;
           isCurtainOpen = data['curtainStatus'] == 1;
-          fanSpeed = (data['fanStatus'] as num).toDouble(); // Handle numeric conversion safely
+          fanSpeed = (data['fanStatus'] as num).toDouble();
         });
       } else {
         showSnackbar('Error: ${response.statusCode} ${response.reasonPhrase}');
       }
     } catch (e) {
       showSnackbar('Error: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
     }
   }
 
@@ -71,12 +73,8 @@ class _ControlPageState extends State<ControlPage> {
   }
 
   Future<void> sendCommand(String endpoint, String message) async {
-    setState(() {
-      isLoading = true;
-    });
     try {
-      String hostname = await getMdnsHostname();
-      final url = Uri.parse('$hostname/$endpoint');
+      final url = Uri.parse('http://your-api-url/$endpoint');
       final response = await http.post(url, body: '');
       if (response.statusCode == 200) {
         fetchData();
@@ -85,10 +83,6 @@ class _ControlPageState extends State<ControlPage> {
       }
     } catch (e) {
       showSnackbar('Error: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
     }
   }
 
@@ -99,11 +93,34 @@ class _ControlPageState extends State<ControlPage> {
 
     if (_debounce?.isActive ?? false) _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      sendCommand(
-        'fan/set?speed=${value.round()}',
-        'Setting Fan Speed to ${value.round()}',
-      );
+      sendCommand('fan/set?speed=${value.round()}', 'Setting Fan Speed');
     });
+  }
+
+  void _onCurtainSwitchChanged(bool value) {
+    setState(() {
+      isCurtainOpen = value;
+      isCurtainInProgress = true;
+    });
+    sendCommand(
+      value ? 'curtain/open' : 'curtain/close',
+      value ? 'Opening Curtain' : 'Closing Curtain',
+    );
+    Timer(Duration(minutes: 1), () {
+      setState(() {
+        isCurtainInProgress = false;
+      });
+    });
+  }
+
+  void _onLightSwitchChanged(bool value) {
+    setState(() {
+      isLightOn = value;
+    });
+    sendCommand(
+      value ? 'led/on' : 'led/off',
+      value ? 'Turning On Light' : 'Turning Off Light',
+    );
   }
 
   @override
@@ -121,38 +138,45 @@ class _ControlPageState extends State<ControlPage> {
           ),
         ),
       ),
-      body: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ListView(
-              children: [
-                controlCard(
-                  icon: Icons.curtains,
-                  label: 'Curtain',
-                  color: Colors.orange,
-                  status: isCurtainOpen ? "Open" : "Closed",
-                  child: Switch(
-                    value: isCurtainOpen,
-                    onChanged: isAutomaticCurtain
-                        ? null
-                        : (value) {
-                      setState(() {
-                        isCurtainOpen = value;
-                      });
-                      sendCommand(
-                        value ? 'curtain/open' : 'curtain/close',
-                        value ? 'Opening Curtain' : 'Closing Curtain',
-                      );
-                    },
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: [
+            controlCard(
+              icon: Icons.lightbulb_outline,
+              label: 'Light',
+              color: Colors.yellow,
+              status: isLightOn ? "On" : "Off",
+              child: Switch(
+                value: isLightOn,
+                onChanged: isAutomaticLight ? null : _onLightSwitchChanged,
+              ),
+            ),
+            controlCard(
+              icon: Icons.curtains,
+              label: 'Curtain',
+              color: Colors.orange,
+              status: isCurtainOpen ? "Open" : "Closed",
+              child: Switch(
+                value: isCurtainOpen,
+                onChanged: isAutomaticCurtain || isCurtainInProgress
+                    ? null
+                    : _onCurtainSwitchChanged,
+              ),
+            ),
+            controlCard(
+              icon: Icons.speed,
+              label: 'Fan Speed',
+              color: Colors.blue,
+              status: '${fanSpeed.round()}',
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  RotationTransition(
+                    turns: _fanController,
+                    child: Icon(Icons.toys, size: 80, color: Colors.blue[300]),
                   ),
-                ),
-                controlCard(
-                  icon: Icons.speed,
-                  label: 'Fan Speed',
-                  color: Colors.blue,
-                  status: '${fanSpeed.round()}',
-                  child: Slider(
+                  Slider(
                     value: fanSpeed,
                     min: 0,
                     max: 255,
@@ -160,13 +184,27 @@ class _ControlPageState extends State<ControlPage> {
                     label: fanSpeed.round().toString(),
                     onChanged: isAutomaticFan ? null : _onFanSpeedChanged,
                   ),
-                ),
-                controlCard(
-                  icon: Icons.water_drop,
-                  label: 'Pump',
-                  color: Colors.green,
-                  status: isPumpOn ? "On" : "Off",
-                  child: Switch(
+                ],
+              ),
+            ),
+            controlCard(
+              icon: Icons.water_drop,
+              label: 'Pump',
+              color: Colors.green,
+              status: isPumpOn ? "On" : "Off",
+              child: Stack(
+                children: [
+                  AnimatedOpacity(
+                    opacity: isPumpOn ? 1.0 : 0.0,
+                    duration: Duration(seconds: 1),
+                    child: Image.asset(
+                      'assets/water_flow.gif',
+                      height: 60,
+                      width: 60,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  Switch(
                     value: isPumpOn,
                     onChanged: isAutomaticPump
                         ? null
@@ -180,22 +218,11 @@ class _ControlPageState extends State<ControlPage> {
                       );
                     },
                   ),
-                ),
-              ],
-            ),
-          ),
-          if (isLoading)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black54,
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                  ),
-                ),
+                ],
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
