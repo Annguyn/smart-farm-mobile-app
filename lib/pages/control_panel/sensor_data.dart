@@ -6,6 +6,7 @@ import 'package:An_Smart_Farm_IOT/pages/control_panel/options_enum.dart';
 import 'package:An_Smart_Farm_IOT/pages/control_panel/widgets/slider/slider_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:An_Smart_Farm_IOT/constants.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../../utils/slider_utils.dart';
 
@@ -19,13 +20,14 @@ class ControlPanelPage extends StatefulWidget {
 }
 
 class _ControlPanelPageState extends State<ControlPanelPage> {
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   Options option = Options.temperature;
   double temp = 22.85;
   double humidity = 45.0;
   double soilMoisture = 30.0;
   double distance = 2;
   double light = 0;
-  bool waterLevelStatus = false;
+  double waterLevelStatus = 0;
   bool soundStatus = false;
   bool fanStatus = false;
   bool pumpStatus = false;
@@ -34,6 +36,7 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
   bool automaticPump = false;
   bool automaticCurtain = false;
   Timer? _timer;
+  Timer? _notificationTimer;
 
   @override
   void initState() {
@@ -42,11 +45,66 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
     _timer = Timer.periodic(Duration(seconds: 2), (timer) {
       fetchSensorData();
     });
+    _notificationTimer = Timer.periodic(Duration(minutes: 20), (timer) {
+      checkAndSendNotification();
+    });
+    initializeNotifications();
   }
 
+  void initializeNotifications() {
+    final initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+    final initializationSettingsIOS = IOSInitializationSettings();
+    final initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  void checkAndSendNotification() {
+    String alertMessage = '';
+
+    if (temp > 33) {
+      alertMessage += 'Temperature is too high: $temp°C. ';
+    }
+    if (distance >= 20) {
+      alertMessage += 'Out of water in tank : $distance cm. ';
+    }
+    if (soilMoisture >= 3200) {
+      alertMessage += 'Soil moisture is too high: $soilMoisture. ';
+    }
+
+    if (alertMessage.isNotEmpty) {
+      sendNotification(alertMessage);
+    }
+  }
+
+  void sendNotification(String message) async {
+    const androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'sensor_alerts_channel',
+      'Sensor Alerts',
+      channelDescription: 'Notifications for sensor value alerts',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: true,
+    );
+    const iOSPlatformChannelSpecifics = IOSNotificationDetails();
+    const platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iOSPlatformChannelSpecifics,
+    );
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      'Sensor Alert',
+      message,
+      platformChannelSpecifics,
+      payload: 'sensor_alert',
+    );
+  }
   @override
   void dispose() {
     _timer?.cancel();
+    _notificationTimer?.cancel();
     super.dispose();
   }
 
@@ -62,7 +120,7 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
           soilMoisture = (data['soilMoisture'] as num).toDouble();
           distance = (data['distance'] as num).toDouble();
           light = (data['light'] as num).toDouble();
-          waterLevelStatus = data['waterLevelStatus'] == 1;
+          waterLevelStatus = (data['waterLevelStatus'] as num).toDouble();
           soundStatus = data['soundStatus'] == 1;
           fanStatus = data['fanStatus'] == 1;
           pumpStatus = data['pumpStatus'] == 1;
@@ -227,7 +285,7 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
         sensorCard('Soil Moisture', '$soilMoisture %'),
         sensorCard('Distance', '$distance cm'),
         sensorCard('Light', '$light lx'),
-        sensorCard('Water Level', '$waterLevelStatus '),
+        sensorCard('Water Level', '$waterLevelStatus'),
         sensorCard('Sound', '$soundStatus'),
       ],
     );

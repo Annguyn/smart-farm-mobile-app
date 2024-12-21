@@ -110,9 +110,9 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> changeMode(String device, String newMode) async {
     final endpoint = {
-      'Smart Curtain': 'curtain',
-      'Smart Fan': 'fan',
-      'Smart water pump': 'pump',
+      'Smart Curtain': 'stepper',
+      'Smart Fan': 'dc',
+      'Smart water pump': 'relay',
       'Smart Light': 'light',
     };
 
