@@ -25,7 +25,7 @@ class _HomePageState extends State<HomePage> {
         icon: 'assets/svg/power-off-solid.svg'),
     DeviceModel(
         name: 'Smart water pump',
-        isActive: true,
+        isActive: false,
         color: "#ff5f5f",
         icon: 'assets/svg/water-solid.svg'),
     DeviceModel(
@@ -35,38 +35,38 @@ class _HomePageState extends State<HomePage> {
         icon: 'assets/svg/camera-solid.svg'),
     DeviceModel(
         name: 'Smart Sensor',
-        isActive: false,
+        isActive: true,
         color: "#c9c306",
         icon: 'assets/svg/temperature-three-quarters-solid.svg'),
     DeviceModel(
         name: 'Smart Light',
         isActive: false,
-        color: "#c207db",
+        color: "#ffeb3b",
         icon: 'assets/svg/speaker.svg'),
     DeviceModel(
         name: 'Smart Curtain',
         isActive: false,
-        color: "#c207db",
+        color: "#8bc34a",
         icon: 'assets/svg/people-roof-solid.svg'),
     DeviceModel(
         name: 'Smart Fan',
         isActive: false,
-        color: "#c207db",
+        color: "#03a9f4",
         icon: 'assets/svg/fan-solid.svg'),
     DeviceModel(
         name: 'Statistics',
-        isActive: false,
-        color: "#c207db",
+        isActive: true,
+        color: "#9c27b0",
         icon: 'assets/svg/chart-column-solid.svg'),
     DeviceModel(
         name: 'About us',
-        isActive: false,
-        color: "#c207db",
+        isActive: true,
+        color: "#ff9800",
         icon: 'assets/svg/address-card-regular.svg'),
     DeviceModel(
         name: 'Settings',
-        isActive: false,
-        color: "#c207db",
+        isActive: true,
+        color: "#607d8b",
         icon: 'assets/svg/gear-solid.svg'),
   ];
 
@@ -248,7 +248,9 @@ class _HomePageState extends State<HomePage> {
                               itemCount: devices.length,
                               itemBuilder: (BuildContext ctx, index) {
                                 bool isInteractive = devices[index].name != 'Statistics' &&
-                                    devices[index].name != 'About us';
+                                    devices[index].name != 'About us' && devices[index].name != 'Settings'
+                                    && devices[index].name != 'Control Panel' && devices[index].name != 'Smart Sensor'
+                                    && devices[index].name != 'Smart Camera';
 
                                 return Devices(
                                   name: devices[index].name,
