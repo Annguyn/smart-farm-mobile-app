@@ -84,7 +84,7 @@ class _ControlPageState extends State<ControlPage> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Control Panel'),
+        title: Text('Control Panel', style: TextStyle(fontWeight: FontWeight.bold)),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -104,6 +104,7 @@ class _ControlPageState extends State<ControlPage> with SingleTickerProviderStat
               label: 'Curtain',
               color: Colors.orange,
               status: isCurtainOpen ? "Open" : "Closed",
+              isActive: isCurtainOpen,
               child: Switch(
                 value: isCurtainOpen,
                 onChanged: isAutomaticCurtain || isCurtainInProgress
@@ -132,6 +133,7 @@ class _ControlPageState extends State<ControlPage> with SingleTickerProviderStat
               label: 'Fan Speed',
               color: Colors.blue,
               status: '${fanSpeed.round()}',
+              isActive: fanSpeed > 0,
               child: Slider(
                 value: fanSpeed,
                 min: 0,
@@ -146,6 +148,7 @@ class _ControlPageState extends State<ControlPage> with SingleTickerProviderStat
               label: 'Pump',
               color: Colors.green,
               status: isPumpOn ? "On" : "Off",
+              isActive: isPumpOn,
               child: Switch(
                 value: isPumpOn,
                 onChanged: isAutomaticPump
@@ -166,6 +169,7 @@ class _ControlPageState extends State<ControlPage> with SingleTickerProviderStat
               label: 'Light',
               color: Colors.yellow,
               status: isLightOn ? "On" : "Off",
+              isActive: isLightOn,
               child: Switch(
                 value: isLightOn,
                 onChanged: isAutomaticLight
@@ -221,16 +225,20 @@ class _ControlPageState extends State<ControlPage> with SingleTickerProviderStat
     required String label,
     required Color color,
     required String status,
+    required bool isActive,
     required Widget child,
   }) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 6,
-      child: Container(
+      elevation: 10,
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [color.withOpacity(0.3), color],
+            colors: isActive
+                ? [color.withOpacity(0.7), color]
+                : [Colors.grey.withOpacity(0.4), Colors.grey],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -240,7 +248,7 @@ class _ControlPageState extends State<ControlPage> with SingleTickerProviderStat
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              Icon(icon, size: 50, color: Colors.white),
+              Icon(icon, size: 50, color: isActive ? Colors.white : Colors.black38),
               SizedBox(width: 20),
               Expanded(
                 child: Column(
@@ -249,15 +257,15 @@ class _ControlPageState extends State<ControlPage> with SingleTickerProviderStat
                     Text(
                       label,
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: isActive ? Colors.white : Colors.black38,
                       ),
                     ),
                     SizedBox(height: 5),
                     Text(
                       'Status: $status',
-                      style: TextStyle(fontSize: 16, color: Colors.white70),
+                      style: TextStyle(fontSize: 18, color: isActive ? Colors.white70 : Colors.black38),
                     ),
                     SizedBox(height: 10),
                     child,

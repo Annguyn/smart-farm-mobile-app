@@ -231,23 +231,43 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
 
   Widget slider() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${_getOptionLabel(option)}: ${_getSensorValue(option)}',
+          '${_getOptionLabel(option)}: ${_getSensorValue(option)} ${_getUnit(option)}',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
+        const SizedBox(height: 10),
         SliderWidget(
           progressVal: normalize(_getSensorValue(option), 0, 100),
-          color: Colors.blueAccent,
+          color: _getOptionColor(option),
           unit: _getUnit(option),
           realValue: _getSensorValue(option),
           onChange: (value) {
-            setState(() {});
+            setState(() {
+              // Update value if needed
+            });
           },
         ),
       ],
     );
   }
+
+  Color _getOptionColor(Options opt) {
+    switch (opt) {
+      case Options.temperature:
+        return Colors.orange;
+      case Options.humidity:
+        return Colors.blue;
+      case Options.soilMoisture:
+        return Colors.green;
+      case Options.distance:
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
+  }
+
 
   double _getSensorValue(Options opt) {
     switch (opt) {
@@ -284,29 +304,33 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
       spacing: 16,
       runSpacing: 16,
       children: [
-        sensorCard('Temperature', '$temp °C'),
-        sensorCard('Humidity', '$humidity %'),
-        sensorCard('Soil Moisture', '$soilMoisture %'),
-        sensorCard('Distance', '$distance cm'),
-        sensorCard('Light', '$light lx'),
-        sensorCard('Water Level', '$waterLevelStatus'),
-        sensorCard('Sound', '$soundStatus'), // Update to display numeric value
+        sensorCard('🌡️ Temperature', '$temp °C', Colors.orange),
+        sensorCard('💧 Humidity', '$humidity %', Colors.blue),
+        sensorCard('🌱 Soil Moisture', '$soilMoisture %', Colors.green),
+        sensorCard('📏 Tank Depth', '$distance cm', Colors.purple),
+        sensorCard('🔆 Light', '$light lx', Colors.yellow),
+        sensorCard('💧 Water Level', '$waterLevelStatus', Colors.teal),
+        sensorCard('🔊 Sound', '$soundStatus', Colors.red),
       ],
     );
   }
 
-  Widget sensorCard(String title, String value) {
+  Widget sensorCard(String title, String value, Color color) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      elevation: 6,
+      elevation: 10,
+      shadowColor: color.withOpacity(0.4),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text(value, style: TextStyle(fontSize: 14, color: Colors.blueGrey)),
+            Text(
+              value,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+            ),
           ],
         ),
       ),
@@ -318,33 +342,34 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
       spacing: 16,
       runSpacing: 16,
       children: [
-        statusCard('Fan', fanStatus),
-        statusCard('Pump', pumpStatus),
-        statusCard('Curtain', curtainStatus),
-        statusCard('Automatic Fan', automaticFan),
-        statusCard('Automatic Pump', automaticPump),
-        statusCard('Automatic Curtain', automaticCurtain),
+        statusCard('Fan', fanStatus, Colors.green),
+        statusCard('Pump', pumpStatus, Colors.teal),
+        statusCard('Curtain', curtainStatus, Colors.orange),
+        statusCard('Auto Fan', automaticFan, Colors.purple),
+        statusCard('Auto Pump', automaticPump, Colors.blue),
+        statusCard('Auto Curtain', automaticCurtain, Colors.yellow),
       ],
     );
   }
 
-  Widget statusCard(String title, dynamic status) {
+  Widget statusCard(String title, bool status, Color color) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      elevation: 6,
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            status is bool
-                ? Icon(
-              status ? Icons.check_circle : Icons.cancel,
-              color: status ? Colors.green : Colors.red,
-            )
-                : Text(status.toString(), style: TextStyle(fontSize: 14, color: Colors.blueGrey)), // Display numeric value
-          ],
+      elevation: 8,
+      shadowColor: color.withOpacity(0.4),
+      child: ListTile(
+        leading: Icon(
+          status ? Icons.check_circle : Icons.cancel,
+          color: status ? color : Colors.red,
+          size: 30,
+        ),
+        title: Text(
+          title,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        trailing: Text(
+          status ? 'ON' : 'OFF',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: status ? color : Colors.red),
         ),
       ),
     );

@@ -170,7 +170,7 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: const [
                     Text(
-                      "Hi, Xuân An",
+                      "Dashboard",
                       style: TextStyle(
                           fontSize: 28,
                           color: Colors.black,
@@ -210,7 +210,7 @@ class _HomePageState extends State<HomePage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: const [
                                   Text(
-                                    "A total of 4 devices",
+                                    "Welcome back",
                                     style: TextStyle(
                                         fontSize: 15,
                                         color: Colors.grey,
@@ -250,7 +250,7 @@ class _HomePageState extends State<HomePage> {
                                 bool isInteractive = devices[index].name != 'Statistics' &&
                                     devices[index].name != 'About us' && devices[index].name != 'Settings'
                                     && devices[index].name != 'Control Panel' && devices[index].name != 'Smart Sensor'
-                                    && devices[index].name != 'Smart Camera';
+                                    && devices[index].name != 'Smart camera';
 
                                 return Devices(
                                   name: devices[index].name,
