@@ -78,20 +78,29 @@ class _SetIpAddressPageState extends State<SetIpAddressPage> {
       return;
     }
 
-    final url = '$ipAddress/setThreshold';
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'type': _thresholdType, 'value': _value}),
-    );
+    print('Setting threshold: type=$_thresholdType, value=$_value');
 
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Threshold set successfully')),
+    final url = '$ipAddress/setThreshold';
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'type': _thresholdType, 'value': _value}),
       );
-    } else {
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Threshold set successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to set threshold: ${response.body}')),
+        );
+      }
+    } catch (e) {
+      print('Error setting threshold: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to set threshold: ${response.body}')),
+        SnackBar(content: Text('Error setting threshold: $e')),
       );
     }
   }

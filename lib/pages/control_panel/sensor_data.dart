@@ -28,7 +28,7 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
   double distance = 2;
   double light = 0;
   double waterLevelStatus = 0;
-  bool soundStatus = false;
+  double soundStatus = 0;
   bool fanStatus = false;
   bool pumpStatus = false;
   bool curtainStatus = false;
@@ -101,6 +101,7 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
       payload: 'sensor_alert',
     );
   }
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -115,20 +116,23 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          temp = (data['temperature'] as num).toDouble();
-          humidity = (data['humidity'] as num).toDouble();
-          soilMoisture = (data['soilMoisture'] as num).toDouble();
-          distance = (data['distance'] as num).toDouble();
-          light = (data['light'] as num).toDouble();
-          waterLevelStatus = (data['waterLevelStatus'] as num).toDouble();
-          soundStatus = data['soundStatus'] == 1;
-          fanStatus = data['fanStatus'] == 1;
-          pumpStatus = data['pumpStatus'] == 1;
-          curtainStatus = data['curtainStatus'] == 1;
-          automaticFan = data['automaticFan'] == 1;
-          automaticPump = data['automaticPump'] == 1;
-          automaticCurtain = data['automaticCurtain'] == 1;
+          temp = (data['temperature'] as num?)?.toDouble() ?? 0.0;
+          humidity = (data['humidity'] as num?)?.toDouble() ?? 0.0;
+          soilMoisture = (data['soilMoisture'] as num?)?.toDouble() ?? 0.0;
+          distance = (data['distance'] as num?)?.toDouble() ?? 0.0;
+          light = (data['light'] as num?)?.toDouble() ?? 0.0;
+          waterLevelStatus = (data['waterLevelStatus'] as num?)?.toDouble() ?? 0.0;
+          soundStatus = (data['soundStatus'] as num?)?.toDouble() ?? 0.0;
+          fanStatus = (data['fanStatus'] as int?) == 1;
+          pumpStatus = (data['pumpStatus'] as int?) == 1;
+          curtainStatus = (data['curtainStatus'] as int?) == 1;
+          automaticFan = (data['automaticFan'] as int?) == 1;
+          automaticPump = (data['automaticPump'] as int?) == 1;
+          automaticCurtain = (data['automaticCurtain'] as int?) == 1;
+          print('State updated');
         });
+      } else {
+        print('Error: ${response.statusCode} ${response.reasonPhrase}');
       }
     } catch (e) {
       print('Error fetching sensor data: $e');
@@ -286,7 +290,7 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
         sensorCard('Distance', '$distance cm'),
         sensorCard('Light', '$light lx'),
         sensorCard('Water Level', '$waterLevelStatus'),
-        sensorCard('Sound', '$soundStatus'),
+        sensorCard('Sound', '$soundStatus'), // Update to display numeric value
       ],
     );
   }
@@ -324,7 +328,7 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
     );
   }
 
-  Widget statusCard(String title, bool status) {
+  Widget statusCard(String title, dynamic status) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       elevation: 6,
@@ -334,10 +338,12 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            Icon(
+            status is bool
+                ? Icon(
               status ? Icons.check_circle : Icons.cancel,
               color: status ? Colors.green : Colors.red,
-            ),
+            )
+                : Text(status.toString(), style: TextStyle(fontSize: 14, color: Colors.blueGrey)), // Display numeric value
           ],
         ),
       ),
