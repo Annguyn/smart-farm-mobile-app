@@ -306,7 +306,7 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
       children: [
         sensorCard('🌡️ Temperature', '$temp °C', Colors.orange),
         sensorCard('💧 Humidity', '$humidity %', Colors.blue),
-        sensorCard('🌱 Soil Moisture', '$soilMoisture %', Colors.green),
+        sensorCard('🌱 Soil Moisture', '$soilMoisture', Colors.green),
         sensorCard('📏 Tank Depth', '$distance cm', Colors.purple),
         sensorCard('🔆 Light', '$light lx', Colors.yellow),
         sensorCard('💧 Water Level', '$waterLevelStatus', Colors.teal),

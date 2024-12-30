@@ -30,6 +30,7 @@ class _CameraControlPageState extends State<CameraControlPage> {
 
     try {
       String hostname = await getMdnsHostname();
+
       final url = Uri.parse('$hostname/capture');
       final response = await http.get(url);
 
@@ -65,6 +66,7 @@ class _CameraControlPageState extends State<CameraControlPage> {
       );
     }
   }
+
   Future<void> pickImageAndPredict() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -140,6 +142,7 @@ class _CameraControlPageState extends State<CameraControlPage> {
       });
     }
   }
+
   Future<void> predictDisease() async {
     if (isDisposed) return;
     setState(() {
@@ -247,15 +250,26 @@ class _CameraControlPageState extends State<CameraControlPage> {
                   )
                       : ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: Mjpeg(
-                      stream: '$mdnsHostname/stream',
-                      isLive: true,
-                      error: (context, error, stack) => Center(
-                        child: Text(
-                          'Error: $error',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
+                    child: FutureBuilder<String>(
+                      future: getMdnsHostname(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                          return Mjpeg(
+                            stream: '${snapshot.data}/stream',
+                            isLive: true,
+                            error: (context, error, stack) => Center(
+                              child: Text(
+                                'Error: $error',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          );
+                        } else {
+                          return Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                      },
                     ),
                   ),
                 ),
