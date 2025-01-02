@@ -167,7 +167,7 @@ class _ControlPageState extends State<ControlPage> with SingleTickerProviderStat
             controlCard(
               icon: Icons.lightbulb,
               label: 'Light',
-              color: Colors.yellow,
+              color: Colors.red,
               status: isLightOn ? "On" : "Off",
               isActive: isLightOn,
               child: Switch(

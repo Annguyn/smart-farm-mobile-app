@@ -121,7 +121,7 @@ class _ControlPanelPageState extends State<ControlPanelPage> {
           soilMoisture = (data['soilMoisture'] as num?)?.toDouble() ?? 0.0;
           distance = (data['distance'] as num?)?.toDouble() ?? 0.0;
           light = (data['light'] as num?)?.toDouble() ?? 0.0;
-          waterLevelStatus = (data['waterLevelStatus'] as num?)?.toDouble() ?? 0.0;
+          waterLevelStatus = (data['waterLevel'] as num?)?.toDouble() ?? 0.0;
           soundStatus = (data['soundStatus'] as num?)?.toDouble() ?? 0.0;
           fanStatus = (data['fanStatus'] as int?) == 1;
           pumpStatus = (data['pumpStatus'] as int?) == 1;
